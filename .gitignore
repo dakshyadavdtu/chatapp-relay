@@ -1,30 +1,28 @@
-# Dependencies
 node_modules/
-
-# Build output
 dist/
 build/
+.cache/
+.turbo/
 
-# Env files (keep .env.example if you add one)
 .env
+.env.local
 .env.*
 !.env.example
 
-# OS
-.DS_Store
-
-# Logs
 *.log
 logs/
 
-# Test output
-coverage/
+.DS_Store
+Thumbs.db
 
-# IDE (local)
+coverage/
+.nyc_output/
+
 .idea/
 .vscode/
+*.swp
+*.swo
 
-# Keys and certs
 *.pem
 *.key
 *.p12
