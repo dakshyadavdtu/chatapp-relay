@@ -1,4 +1,4 @@
-// Session / token checks — connect to routes when auth exists.
+// Wire into routes when authentication is added.
 
 export async function getSession(_req) {
   return null;

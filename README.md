@@ -6,6 +6,7 @@ Chat-style web app: a Node.js backend and a Vite frontend in one repo.
 
 ```
 .
+├── .gitignore
 ├── backend/     # HTTP server (Node)
 ├── frontend/    # Browser UI (Vite)
 ├── LICENSE
