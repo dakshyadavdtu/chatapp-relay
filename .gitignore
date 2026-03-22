@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Env files (keep .env.example if you add one)
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Test output
+coverage/
+
+# IDE (local)
+.idea/
+.vscode/
+
+# Keys and certs
+*.pem
+*.key
+*.p12
+*.cer
