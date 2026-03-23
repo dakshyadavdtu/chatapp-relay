@@ -1,7 +1,5 @@
+import { getSession } from './session.js';
+
 export function createAuth() {
-  return {
-    async getSession(_req) {
-      return null;
-    },
-  };
+  return { getSession };
 }
