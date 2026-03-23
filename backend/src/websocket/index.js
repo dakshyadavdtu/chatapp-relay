@@ -1,3 +1,17 @@
-// Attach WebSocket upgrade handling here when implemented.
+export function attachWebSocket(httpServer) {
+  httpServer.on('upgrade', (_req, socket) => {
+    const body = 'websocket not implemented\n';
+    const headers = [
+      'HTTP/1.1 501 Not Implemented',
+      'Connection: close',
+      `Content-Length: ${Buffer.byteLength(body)}`,
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      '',
+    ].join('\r\n');
 
-export function attachWebSocket(_httpServer) {}
+    socket.write(headers);
+    socket.write(body);
+    socket.destroy();
+  });
+}
