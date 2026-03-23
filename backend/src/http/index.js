@@ -1,12 +1,9 @@
 import { handleHealth } from './handlers/health.js';
+import { routes } from './routes.js';
 
 export function createHttpHandler() {
   return (req, res) => {
     const path = req.url?.split('?')[0] ?? '/';
-    const routes = {
-      '/': handleHealth,
-      '/health': handleHealth,
-    };
     const handler = routes[path];
     if (handler) {
       handler(req, res);
