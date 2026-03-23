@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { loadConfig } from '../config/env.js';
-import { createHttpHandler } from '../routes/http.js';
+import { createHttpHandler } from '../http/index.js';
 import { attachWebSocket } from '../websocket/index.js';
 
 export function startServer() {

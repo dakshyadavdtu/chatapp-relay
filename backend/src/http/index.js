@@ -1,4 +1,4 @@
-import { handleHealth } from '../handlers/health.js';
+import { handleHealth } from './handlers/health.js';
 
 export function createHttpHandler() {
   return (req, res) => {
@@ -16,3 +16,4 @@ export function createHttpHandler() {
     res.end('not found\n');
   };
 }
+

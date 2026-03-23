@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { getHealth } from '../src/services/health.js';
-import { createHttpHandler } from '../src/routes/http.js';
+import { createHttpHandler } from '../src/http/index.js';
 
 test('health service', () => {
   assert.deepEqual(getHealth(), { ok: true });
