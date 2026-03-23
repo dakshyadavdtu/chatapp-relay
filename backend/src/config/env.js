@@ -1,4 +1,4 @@
-export function readPort() {
+function readPort() {
   const raw = process.env.PORT;
   if (raw === undefined || raw === '') {
     return 3000;
@@ -8,4 +8,10 @@ export function readPort() {
     throw new Error('PORT must be a positive number');
   }
   return n;
+}
+
+export function loadConfig() {
+  return {
+    port: readPort()
+  };
 }
