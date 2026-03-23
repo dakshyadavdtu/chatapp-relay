@@ -30,6 +30,7 @@ test('http route /', () => {
   handler(req, res);
 
   assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.headers, { 'Content-Type': 'text/plain; charset=utf-8' });
   assert.equal(res.body, 'ok\n');
 });
 
@@ -41,6 +42,19 @@ test('http route /health', () => {
   handler(req, res);
 
   assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.headers, { 'Content-Type': 'text/plain; charset=utf-8' });
+  assert.equal(res.body, 'ok\n');
+});
+
+test('http route /health with query', () => {
+  const handler = createHttpHandler();
+  const req = { url: '/health?x=1' };
+  const res = makeRes();
+
+  handler(req, res);
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.headers, { 'Content-Type': 'text/plain; charset=utf-8' });
   assert.equal(res.body, 'ok\n');
 });
 
@@ -52,5 +66,6 @@ test('http route 404', () => {
   handler(req, res);
 
   assert.equal(res.statusCode, 404);
+  assert.deepEqual(res.headers, { 'Content-Type': 'text/plain; charset=utf-8' });
   assert.equal(res.body, 'not found\n');
 });
