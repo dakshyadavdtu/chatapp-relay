@@ -1,11 +1,12 @@
-import { routes } from './routes.js';
+import { createRequestContext } from './request.js';
+import { match } from './routes.js';
 
 export function createHttpHandler() {
   return (req, res) => {
-    const path = req.url?.split('?')[0] ?? '/';
-    const handler = routes[path];
+    const ctx = createRequestContext(req);
+    const handler = match(ctx.method, ctx.path);
     if (handler) {
-      return Promise.resolve(handler(req, res)).catch((err) => {
+      return Promise.resolve(handler(ctx, res)).catch((err) => {
         if (res.headersSent) {
           return;
         }

@@ -6,3 +6,11 @@ export function writeJson(res, status, body) {
   });
   res.end(payload);
 }
+
+export function jsonOk(res, data, status = 200) {
+  writeJson(res, status, { success: true, data });
+}
+
+export function jsonErr(res, status, message, code = 'ERROR') {
+  writeJson(res, status, { success: false, error: message, code });
+}
