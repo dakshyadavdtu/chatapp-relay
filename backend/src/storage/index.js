@@ -1,31 +1,32 @@
+import { storageNotReady } from './notReady.js';
+
 export function createStorage() {
-  function notReady() {
-    const err = new Error('storage not ready');
-    err.code = 'STORAGE_NOT_READY';
-    throw err;
-  }
+  const n = () => storageNotReady();
 
   return {
     ready: false,
     chats: {
       async get(_chatId) {
-        notReady();
+        n();
       },
       async listForUser(_userId) {
-        notReady();
+        n();
+      },
+    },
+    messages: {
+      async append(_record) {
+        n();
+      },
+      async getById(_messageId) {
+        n();
+      },
+      async listByChatId(_chatId, _opts) {
+        n();
       },
     },
     rooms: {
       async get(_id) {
-        notReady();
-      },
-    },
-    messages: {
-      async add(_message) {
-        notReady();
-      },
-      async listByRoom(_roomId) {
-        notReady();
+        n();
       },
     },
   };

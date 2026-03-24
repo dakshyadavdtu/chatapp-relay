@@ -9,5 +9,14 @@ export function createChatService(storage) {
     async getChat(chatId) {
       return storage.chats.get(chatId);
     },
+    async listMessages(chatId, opts) {
+      return storage.messages.listByChatId(chatId, opts);
+    },
+    async appendMessage(record) {
+      return storage.messages.append(record);
+    },
+    async getMessage(messageId) {
+      return storage.messages.getById(messageId);
+    },
   };
 }
