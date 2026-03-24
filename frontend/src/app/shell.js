@@ -1,6 +1,6 @@
 import { createLayout } from '../components/Layout.js';
 import { getRoute, onRouteChange } from './router.js';
-import { renderChatPlaceholder } from '../pages/chat.js';
+import { renderChatPage } from '../pages/chat.js';
 import { renderHome } from '../pages/home.js';
 
 function getOutlet(root) {
@@ -11,7 +11,7 @@ async function renderRoute(outlet) {
   outlet.replaceChildren();
   const route = getRoute();
   if (route === '/chat') {
-    await renderChatPlaceholder(outlet);
+    await renderChatPage(outlet);
     return;
   }
   await renderHome(outlet);

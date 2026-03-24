@@ -3,7 +3,7 @@ import { apiUrl } from '../config/api.js';
 export { apiUrl };
 
 export async function getJson(path) {
-  const res = await fetch(apiUrl(path));
+  const res = await fetch(apiUrl(path), { credentials: 'include' });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err = new Error(body.error ?? `HTTP ${res.status}`);
@@ -17,6 +17,7 @@ export async function getJson(path) {
 export async function postJson(path, payload) {
   const res = await fetch(apiUrl(path), {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload ?? {}),
   });

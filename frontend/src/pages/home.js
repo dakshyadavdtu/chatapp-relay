@@ -1,9 +1,15 @@
 import { getJson } from '../api/client.js';
+import { authState } from '../features/auth/state.js';
 
 export async function renderHome(container) {
   const title = document.createElement('h1');
   title.textContent = 'Relay';
   container.append(title);
+
+  const sessionLine = document.createElement('p');
+  sessionLine.textContent =
+    authState.status === 'signed_in' ? 'Session: signed in' : 'Session: signed out';
+  container.append(sessionLine);
 
   const line = document.createElement('p');
   line.textContent = 'Checking API…';

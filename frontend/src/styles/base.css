@@ -31,3 +31,39 @@ body {
   flex: 1;
   padding: 1rem;
 }
+
+.app-auth-status {
+  margin-left: 0.5rem;
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+.chat-page {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) 1fr;
+  gap: 1rem;
+  min-height: 12rem;
+  align-items: stretch;
+}
+
+.chat-sidebar {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+.chat-sidebar-title {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.chat-main {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+.chat-empty {
+  margin: 0;
+  opacity: 0.8;
+}

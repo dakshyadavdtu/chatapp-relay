@@ -1,3 +1,7 @@
 export const appState = {
-  ready: false,
+  bootstrapped: false,
 };
+
+export function markBootstrapped() {
+  appState.bootstrapped = true;
+}
