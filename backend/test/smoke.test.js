@@ -106,6 +106,17 @@ test('http route 404', async () => {
   assert.equal(res.body, 'not found\n');
 });
 
+test('GET /api/chats is not defined yet', async () => {
+  const handler = createHttpHandler();
+  const req = { url: '/api/chats', method: 'GET' };
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 404);
+  assert.equal(res.body, 'not found\n');
+});
+
 test('POST /api/login rejects missing fields', async () => {
   const handler = createHttpHandler();
   const req = makeJsonPost('/api/login', {});
@@ -129,6 +140,18 @@ test('POST /api/login rejects credentials until wired', async () => {
   assert.equal(res.statusCode, 401);
   const body = JSON.parse(res.body);
   assert.equal(body.success, false);
+  assert.equal(body.code, 'INVALID_CREDENTIALS');
+});
+
+test('POST /api/auth/login same as login', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/auth/login', { username: 'a', password: 'b' });
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 401);
+  const body = JSON.parse(res.body);
   assert.equal(body.code, 'INVALID_CREDENTIALS');
 });
 
