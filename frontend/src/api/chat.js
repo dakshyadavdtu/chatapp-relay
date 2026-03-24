@@ -3,7 +3,7 @@ import { apiUrl } from '../config/api.js';
 export async function listChats() {
   const res = await fetch(apiUrl('/api/chats'), { credentials: 'include' });
   if (res.status === 404) {
-    return { ok: false, reason: 'not_available' };
+    return { success: false, code: 'NOT_AVAILABLE' };
   }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
