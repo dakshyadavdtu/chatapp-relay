@@ -1,7 +1,17 @@
+import { Readable } from 'node:stream';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { getHealth } from '../src/services/health.js';
 import { createHttpHandler } from '../src/http/index.js';
+
+function makeJsonPost(url, payload) {
+  const json = JSON.stringify(payload);
+  const stream = Readable.from([Buffer.from(json)]);
+  stream.url = url;
+  stream.method = 'POST';
+  stream.headers = { 'content-type': 'application/json' };
+  return stream;
+}
 
 test('health service', () => {
   assert.deepEqual(getHealth(), { ok: true });
@@ -94,4 +104,65 @@ test('http route 404', async () => {
   assert.equal(res.statusCode, 404);
   assert.deepEqual(res.headers, { 'Content-Type': 'text/plain; charset=utf-8' });
   assert.equal(res.body, 'not found\n');
+});
+
+test('POST /api/login rejects missing fields', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/login', {});
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 400);
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, false);
+  assert.equal(body.code, 'INVALID_CREDENTIALS');
+});
+
+test('POST /api/login rejects credentials until wired', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/login', { username: 'a', password: 'b' });
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 401);
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, false);
+  assert.equal(body.code, 'INVALID_CREDENTIALS');
+});
+
+test('POST /api/auth/refresh unauthenticated', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/auth/refresh', {});
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 401);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'UNAUTHORIZED');
+});
+
+test('POST /api/logout', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/logout', {});
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(JSON.parse(res.body), { success: true, data: { ok: true } });
+});
+
+test('POST /api/register not implemented', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/register', { username: 'x' });
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 501);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'NOT_IMPLEMENTED');
 });
