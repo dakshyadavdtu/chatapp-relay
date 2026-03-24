@@ -4,7 +4,7 @@ Relay is a chat app we’re building in the open: a Node server for the API and 
 
 ## Current status
 
-We’re still laying the groundwork: repo layout, backend and frontend folders, and basic dev commands. The interesting stuff (full API, persistence, realtime) comes next.
+There are early HTTP routes, a websocket connection, and a Vite client that calls `/api` (proxied in dev) with hash routes. Storage is not wired to a real database yet; full chat and persistence are still to come.
 
 ## Project structure
 
@@ -26,6 +26,7 @@ You’ll need Node 20+ and npm.
 ```bash
 npm install
 npm run dev
+npm test
 ```
 
 **Frontend** — from `frontend/`:
