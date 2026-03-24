@@ -1,4 +1,3 @@
-import { handleHealth } from './handlers/health.js';
 import { routes } from './routes.js';
 
 export function createHttpHandler() {
@@ -6,8 +5,14 @@ export function createHttpHandler() {
     const path = req.url?.split('?')[0] ?? '/';
     const handler = routes[path];
     if (handler) {
-      handler(req, res);
-      return;
+      return Promise.resolve(handler(req, res)).catch((err) => {
+        if (res.headersSent) {
+          return;
+        }
+        res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('internal error\n');
+        console.error(err);
+      });
     }
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('not found\n');
