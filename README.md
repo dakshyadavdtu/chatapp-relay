@@ -35,4 +35,4 @@ npm install
 npm run dev
 ```
 
-If you need custom ports or API URLs, copy `.env.example` to `.env` in `backend/` or `frontend/` and edit there.
+If you need custom ports or API URLs, copy `.env.example` to `.env` in `backend/` or `frontend/` and edit there. The web UI uses hash routes (`#/`, `#/chat`) and proxies `/api` to the backend in dev.

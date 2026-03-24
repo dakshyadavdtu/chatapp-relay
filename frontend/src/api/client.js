@@ -1,14 +1,31 @@
-const base = () => import.meta.env.VITE_API_BASE_URL ?? '';
+import { apiUrl } from '../config/api.js';
 
-export function apiUrl(path) {
-  const p = path.startsWith('/') ? path : `/${path}`;
-  return `${base()}${p}`;
-}
+export { apiUrl };
 
 export async function getJson(path) {
   const res = await fetch(apiUrl(path));
+  const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
+    const err = new Error(body.error ?? `HTTP ${res.status}`);
+    err.status = res.status;
+    err.code = body.code;
+    throw err;
   }
-  return res.json();
+  return body;
+}
+
+export async function postJson(path, payload) {
+  const res = await fetch(apiUrl(path), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload ?? {}),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(body.error ?? `HTTP ${res.status}`);
+    err.status = res.status;
+    err.code = body.code;
+    throw err;
+  }
+  return body;
 }

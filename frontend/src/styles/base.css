@@ -6,3 +6,28 @@
 body {
   margin: 0;
 }
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-nav {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.app-nav a {
+  color: inherit;
+}
+
+.app-nav-sep {
+  margin: 0 0.35rem;
+  opacity: 0.5;
+}
+
+.layout-outlet {
+  flex: 1;
+  padding: 1rem;
+}
