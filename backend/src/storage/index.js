@@ -7,6 +7,14 @@ export function createStorage() {
 
   return {
     ready: false,
+    chats: {
+      async get(_chatId) {
+        notReady();
+      },
+      async listForUser(_userId) {
+        notReady();
+      },
+    },
     rooms: {
       async get(_id) {
         notReady();
