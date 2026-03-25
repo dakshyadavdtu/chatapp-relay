@@ -67,3 +67,35 @@ body {
   margin: 0;
   opacity: 0.8;
 }
+
+.chat-list-status {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.chat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chat-list-item + .chat-list-item {
+  margin-top: 0.25rem;
+}
+
+.chat-list-button {
+  width: 100%;
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.chat-list-button[aria-current='true'] {
+  border-color: #333;
+  background: #f5f5f5;
+}
