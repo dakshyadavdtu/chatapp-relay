@@ -4,9 +4,10 @@ import { match } from './routes.js';
 export function createHttpHandler() {
   return (req, res) => {
     const ctx = createRequestContext(req);
-    const handler = match(ctx.method, ctx.path);
-    if (handler) {
-      return Promise.resolve(handler(ctx, res)).catch((err) => {
+    const matched = match(ctx.method, ctx.path);
+    if (matched) {
+      ctx.params = matched.params ?? Object.create(null);
+      return Promise.resolve(matched.handler(ctx, res)).catch((err) => {
         if (res.headersSent) {
           return;
         }

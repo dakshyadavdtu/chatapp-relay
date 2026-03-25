@@ -6,6 +6,8 @@ import { handleAuthRegister } from './handlers/auth/register.js';
 import { handleHealth } from './handlers/health.js';
 import { handleApiHealth } from './handlers/apiHealth.js';
 import { handleApiMe } from './handlers/apiMe.js';
+import { handleApiChatsList } from './handlers/chats/listChats.js';
+import { handleApiChatMessagesList } from './handlers/chats/listMessages.js';
 
 any('/', handleHealth);
 any('/health', handleHealth);
@@ -16,6 +18,8 @@ route(['POST'], '/api/auth/login', handleAuthLogin);
 route(['POST'], '/api/auth/refresh', handleAuthRefresh);
 route(['POST'], '/api/logout', handleAuthLogout);
 route(['POST'], '/api/register', handleAuthRegister);
+route(['GET', 'HEAD'], '/api/chats', handleApiChatsList);
+route(['GET', 'HEAD'], '/api/chats/:chatId/messages', handleApiChatMessagesList);
 
 export { match } from './router.js';
 

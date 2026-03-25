@@ -9,20 +9,62 @@ export function route(methods, path, handler) {
   routes.push({ methods: list, path, handler });
 }
 
-export function match(method, path) {
-  for (const r of routes) {
-    if (r.path !== path) {
+function splitPath(path) {
+  if (!path || path === '/') {
+    return [];
+  }
+  return path.split('/').filter(Boolean);
+}
+
+function matchPath(pattern, actual) {
+  if (pattern === actual) {
+    return { ok: true, params: Object.create(null) };
+  }
+
+  const pSeg = splitPath(pattern);
+  const aSeg = splitPath(actual);
+  if (pSeg.length !== aSeg.length) {
+    return { ok: false, params: null };
+  }
+
+  const params = Object.create(null);
+  for (let i = 0; i < pSeg.length; i++) {
+    const p = pSeg[i];
+    const a = aSeg[i];
+    if (p.startsWith(':') && p.length > 1) {
+      params[p.slice(1)] = decodeURIComponent(a);
       continue;
     }
-    if (r.methods === null) {
-      return r.handler;
+    if (p !== a) {
+      return { ok: false, params: null };
     }
-    if (r.methods.includes(method)) {
-      return r.handler;
+  }
+  return { ok: true, params };
+}
+
+function methodAllowed(method, routeMethods) {
+  if (routeMethods === null) {
+    return true;
+  }
+  if (routeMethods.includes(method)) {
+    return true;
+  }
+  if (method === 'HEAD' && routeMethods.includes('GET')) {
+    return true;
+  }
+  return false;
+}
+
+export function match(method, path) {
+  for (const r of routes) {
+    const m = matchPath(r.path, path);
+    if (!m.ok) {
+      continue;
     }
-    if (method === 'HEAD' && r.methods.includes('GET')) {
-      return r.handler;
+    if (!methodAllowed(method, r.methods)) {
+      continue;
     }
+    return { handler: r.handler, params: m.params };
   }
   return null;
 }

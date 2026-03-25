@@ -106,15 +106,18 @@ test('http route 404', async () => {
   assert.equal(res.body, 'not found\n');
 });
 
-test('GET /api/chats is not defined yet', async () => {
+test('GET /api/chats returns list', async () => {
   const handler = createHttpHandler();
   const req = { url: '/api/chats', method: 'GET' };
   const res = makeRes();
 
   await handler(req, res);
 
-  assert.equal(res.statusCode, 404);
-  assert.equal(res.body, 'not found\n');
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.headers['Content-Type'], 'application/json; charset=utf-8');
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, true);
+  assert.equal(Array.isArray(body.data), true);
 });
 
 test('POST /api/login rejects missing fields', async () => {

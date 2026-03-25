@@ -52,15 +52,14 @@ test('message draft validation', () => {
 test('chat service delegates to storage', async () => {
   const storage = createStorage();
   const chat = createChatService(storage);
-  await assert.rejects(() => chat.listChatsForUser('u1'), (e) => e.code === 'STORAGE_NOT_READY');
-  await assert.rejects(() => chat.getChat('direct:a:b'), (e) => e.code === 'STORAGE_NOT_READY');
-  await assert.rejects(
-    () => chat.listMessages('direct:a:b', {}),
-    (e) => e.code === 'STORAGE_NOT_READY',
-  );
-  await assert.rejects(
-    () => chat.appendMessage({ messageId: 'm1', chatId: 'direct:a:b' }),
-    (e) => e.code === 'STORAGE_NOT_READY',
-  );
-  await assert.rejects(() => chat.getMessage('m1'), (e) => e.code === 'STORAGE_NOT_READY');
+  const chats = await chat.listChatsForUser('u1');
+  assert.equal(Array.isArray(chats), true);
+  const c1 = await chat.getChat('c1');
+  assert.equal(c1?.id, 'c1');
+  const msgs = await chat.listMessages('c1', {});
+  assert.equal(Array.isArray(msgs), true);
+  const appended = await chat.appendMessage({ chatId: 'c1', body: 'hi', senderId: 'u1' });
+  assert.equal(appended.chatId, 'c1');
+  const byId = await chat.getMessage(appended.id);
+  assert.equal(byId?.id, appended.id);
 });
