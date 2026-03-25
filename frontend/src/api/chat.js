@@ -14,3 +14,16 @@ export async function listChats() {
   }
   return body;
 }
+
+export async function listMessages(chatId) {
+  const path = `/api/chats/${encodeURIComponent(chatId)}/messages`;
+  const res = await fetch(apiUrl(path), { credentials: 'include' });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(body.error ?? `HTTP ${res.status}`);
+    err.status = res.status;
+    err.code = body.code;
+    throw err;
+  }
+  return body;
+}

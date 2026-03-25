@@ -1,4 +1,9 @@
-import { chatState, loadChats, setActiveChatId } from '../features/chat/state.js';
+import {
+  chatState,
+  loadChats,
+  loadMessages,
+  setActiveChatId,
+} from '../features/chat/state.js';
 
 function labelForChat(chat) {
   if (chat.title && String(chat.title).trim()) {
@@ -10,11 +15,68 @@ function labelForChat(chat) {
   return chat.chatId ?? 'Chat';
 }
 
+function messageErrorText(code) {
+  const map = {
+    CHAT_NOT_FOUND: 'Chat not found.',
+    CHAT_ACCESS_DENIED: 'You cannot open this chat.',
+    bad_response: 'Unexpected message response.',
+    fetch_failed: 'Could not load messages.',
+  };
+  return map[code] ?? 'Could not load messages.';
+}
+
 export async function renderChatPage(container) {
   await loadChats();
 
   const root = document.createElement('div');
   root.className = 'chat-page';
+
+  const main = document.createElement('section');
+  main.className = 'chat-main';
+  const mainHint = document.createElement('p');
+  mainHint.className = 'chat-empty';
+  const messageWrap = document.createElement('div');
+  messageWrap.className = 'chat-messages';
+
+  async function renderMessagesArea() {
+    const chatId = chatState.activeChatId;
+    mainHint.textContent = chatId ? `Chat: ${chatId}` : 'Pick a chat from the list.';
+    messageWrap.replaceChildren();
+    if (!chatId) {
+      return;
+    }
+    const loading = document.createElement('p');
+    loading.className = 'chat-empty';
+    loading.textContent = 'Loading messages…';
+    messageWrap.append(loading);
+    await loadMessages(chatId);
+    messageWrap.replaceChildren();
+    if (chatState.messagesStatus === 'error') {
+      const p = document.createElement('p');
+      p.className = 'chat-empty';
+      p.textContent = messageErrorText(chatState.messagesError);
+      messageWrap.append(p);
+      return;
+    }
+    if (chatState.activeMessages.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'chat-empty';
+      p.textContent = 'No messages yet.';
+      messageWrap.append(p);
+      return;
+    }
+    const ul = document.createElement('ul');
+    ul.className = 'chat-message-list';
+    for (const m of chatState.activeMessages) {
+      const li = document.createElement('li');
+      li.className = 'chat-message-list-item';
+      const who = m.senderId ?? '?';
+      const text = typeof m.content === 'string' ? m.content : '';
+      li.textContent = `${who}: ${text}`;
+      ul.append(li);
+    }
+    messageWrap.append(ul);
+  }
 
   const sidebar = document.createElement('aside');
   sidebar.className = 'chat-sidebar';
@@ -54,11 +116,11 @@ export async function renderChatPage(container) {
     if (chatState.activeChatId === chat.chatId) {
       btn.setAttribute('aria-current', 'true');
     }
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       setActiveChatId(chat.chatId);
       listEl.querySelectorAll('.chat-list-button').forEach((b) => b.removeAttribute('aria-current'));
       btn.setAttribute('aria-current', 'true');
-      mainHint.textContent = `Open chat: ${chat.chatId}`;
+      await renderMessagesArea();
     });
     li.append(btn);
     listEl.append(li);
@@ -66,16 +128,8 @@ export async function renderChatPage(container) {
 
   sidebar.append(sideTitle, statusEl, listEl);
 
-  const main = document.createElement('section');
-  main.className = 'chat-main';
-  const mainHint = document.createElement('p');
-  mainHint.className = 'chat-empty';
-  if (chatState.activeChatId) {
-    mainHint.textContent = `Open chat: ${chatState.activeChatId}`;
-  } else {
-    mainHint.textContent = 'Pick a chat from the list.';
-  }
-  main.append(mainHint);
+  main.append(mainHint, messageWrap);
+  await renderMessagesArea();
 
   root.append(sidebar, main);
   container.append(root);

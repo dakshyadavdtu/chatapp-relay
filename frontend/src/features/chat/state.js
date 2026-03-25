@@ -1,10 +1,14 @@
-import { listChats } from '../../api/chat.js';
+import { listChats, listMessages } from '../../api/chat.js';
 
 export const chatState = {
   activeChatId: null,
   chats: [],
   loadStatus: 'idle',
   loadError: null,
+  activeMessages: [],
+  messagesMeta: null,
+  messagesStatus: 'idle',
+  messagesError: null,
 };
 
 export function setActiveChatId(chatId) {
@@ -40,5 +44,35 @@ export async function loadChats() {
     chatState.chats = [];
     chatState.loadStatus = 'error';
     chatState.loadError = 'fetch_failed';
+  }
+}
+
+export async function loadMessages(chatId) {
+  if (!chatId) {
+    chatState.activeMessages = [];
+    chatState.messagesMeta = null;
+    chatState.messagesStatus = 'idle';
+    chatState.messagesError = null;
+    return;
+  }
+  chatState.messagesStatus = 'loading';
+  chatState.messagesError = null;
+  try {
+    const r = await listMessages(chatId);
+    if (!r?.success || !Array.isArray(r?.data?.messages)) {
+      chatState.activeMessages = [];
+      chatState.messagesMeta = null;
+      chatState.messagesStatus = 'error';
+      chatState.messagesError = 'bad_response';
+      return;
+    }
+    chatState.activeMessages = r.data.messages;
+    chatState.messagesMeta = r.data.meta ?? null;
+    chatState.messagesStatus = 'ok';
+  } catch (e) {
+    chatState.activeMessages = [];
+    chatState.messagesMeta = null;
+    chatState.messagesStatus = 'error';
+    chatState.messagesError = e?.code ?? 'fetch_failed';
   }
 }
