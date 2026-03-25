@@ -40,10 +40,10 @@ export async function loadChats() {
     ) {
       chatState.activeChatId = null;
     }
-  } catch {
+  } catch (e) {
     chatState.chats = [];
     chatState.loadStatus = 'error';
-    chatState.loadError = 'fetch_failed';
+    chatState.loadError = e?.code ?? 'fetch_failed';
   }
 }
 
