@@ -63,3 +63,21 @@ test('chat service delegates to storage', async () => {
   const byId = await chat.getMessage(appended.id);
   assert.equal(byId?.id, appended.id);
 });
+
+test('chatListBody nests chats under chats', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const body = await chat.chatListBody('u1');
+  assert.ok(Array.isArray(body.chats));
+  assert.equal(body.chats.some((c) => c.chatId === 'c1'), true);
+});
+
+test('messageListBody returns messages and meta', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const q = new URLSearchParams('');
+  const out = await chat.messageListBody('u1', 'c1', q);
+  assert.equal(out.ok, true);
+  assert.ok(Array.isArray(out.data.messages));
+  assert.equal(typeof out.data.meta.limit, 'number');
+});
