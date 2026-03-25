@@ -1,6 +1,8 @@
 import { jsonErr, jsonOk } from '../../json.js';
+import { getSession } from '../../../auth/session.js';
 import { createStorage } from '../../../storage/index.js';
 import { createChatService } from '../../../chat/service.js';
+import { messageListPayload, parseMessageListQuery } from '../../../chat/messageListPayload.js';
 
 export async function handleApiChatMessagesList(ctx, res) {
   if (ctx.method !== 'GET' && ctx.method !== 'HEAD') {
@@ -19,25 +21,29 @@ export async function handleApiChatMessagesList(ctx, res) {
     return;
   }
 
-  const limit = Number(ctx.query.get('limit'));
-  const beforeTs = Number(ctx.query.get('beforeTs'));
+  const session = await getSession(ctx.req);
+  const userId = session?.user?.id ?? 'u1';
 
   const storage = createStorage();
   const chat = createChatService(storage);
+
+  const chatRow = await chat.getChat(chatId);
+  if (!chatRow) {
+    jsonErr(res, 404, 'Chat not found', 'CHAT_NOT_FOUND');
+    return;
+  }
+  const members = Array.isArray(chatRow.members) ? chatRow.members : [];
+  if (!members.includes(userId)) {
+    jsonErr(res, 403, 'Access denied', 'CHAT_ACCESS_DENIED');
+    return;
+  }
+
+  const { limit, beforeTs } = parseMessageListQuery(ctx.query);
   const messages = await chat.listMessages(chatId, {
-    limit: Number.isFinite(limit) ? limit : undefined,
-    beforeTs: Number.isFinite(beforeTs) ? beforeTs : undefined,
+    limit,
+    beforeTs: beforeTs === null ? undefined : beforeTs,
   });
 
-  jsonOk(
-    res,
-    messages.map((m) => ({
-      id: m.id,
-      chatId: m.chatId,
-      senderId: m.senderId,
-      body: m.body,
-      createdAt: m.createdAt,
-    }))
-  );
+  jsonOk(res, messageListPayload(messages, { limit, beforeTs }));
 }
 

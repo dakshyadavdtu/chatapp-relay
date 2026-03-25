@@ -120,6 +120,34 @@ test('GET /api/chats returns list', async () => {
   assert.equal(Array.isArray(body.data?.chats), true);
 });
 
+test('GET /api/chats/:chatId/messages returns shaped payload', async () => {
+  const handler = createHttpHandler();
+  const req = { url: '/api/chats/c1/messages', method: 'GET' };
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 200);
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, true);
+  assert.equal(Array.isArray(body.data?.messages), true);
+  assert.equal(body.data?.meta?.limit, 50);
+  assert.equal(body.data?.meta?.beforeTs, null);
+  assert.equal(typeof body.data?.meta?.count, 'number');
+});
+
+test('GET /api/chats/:chatId/messages 404 when chat missing', async () => {
+  const handler = createHttpHandler();
+  const req = { url: '/api/chats/unknown-chat/messages', method: 'GET' };
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 404);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'CHAT_NOT_FOUND');
+});
+
 test('POST /api/login rejects missing fields', async () => {
   const handler = createHttpHandler();
   const req = makeJsonPost('/api/login', {});
