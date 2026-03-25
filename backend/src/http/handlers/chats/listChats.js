@@ -2,6 +2,7 @@ import { jsonErr, jsonOk } from '../../json.js';
 import { getSession } from '../../../auth/session.js';
 import { createStorage } from '../../../storage/index.js';
 import { createChatService } from '../../../chat/service.js';
+import { chatListPayload } from '../../../chat/listPayload.js';
 
 export async function handleApiChatsList(ctx, res) {
   if (ctx.method !== 'GET' && ctx.method !== 'HEAD') {
@@ -21,15 +22,6 @@ export async function handleApiChatsList(ctx, res) {
   const chat = createChatService(storage);
   const chats = await chat.listChatsForUser(userId);
 
-  jsonOk(
-    res,
-    chats.map((c) => ({
-      id: c.id,
-      kind: c.kind,
-      title: c.title ?? null,
-      updatedAt: c.updatedAt ?? null,
-      lastMessage: c.lastMessage ?? null,
-    }))
-  );
+  jsonOk(res, chatListPayload(chats, userId));
 }
 

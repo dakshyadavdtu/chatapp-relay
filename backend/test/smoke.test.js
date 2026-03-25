@@ -117,7 +117,7 @@ test('GET /api/chats returns list', async () => {
   assert.equal(res.headers['Content-Type'], 'application/json; charset=utf-8');
   const body = JSON.parse(res.body);
   assert.equal(body.success, true);
-  assert.equal(Array.isArray(body.data), true);
+  assert.equal(Array.isArray(body.data?.chats), true);
 });
 
 test('POST /api/login rejects missing fields', async () => {

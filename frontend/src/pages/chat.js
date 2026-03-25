@@ -17,8 +17,9 @@ export async function renderChatPage(container) {
     const r = await listChats();
     if (r?.success === false && r?.code === 'NOT_AVAILABLE') {
       sideText = 'List not available on server yet';
-    } else if (r?.success && Array.isArray(r?.data)) {
-      sideText = r.data.length === 0 ? 'None yet' : `${r.data.length} chats`;
+    } else if (r?.success && Array.isArray(r?.data?.chats)) {
+      const chats = r.data.chats;
+      sideText = chats.length === 0 ? 'None yet' : `${chats.length} chats`;
     }
   } catch {
     sideText = 'Could not load chat list';
