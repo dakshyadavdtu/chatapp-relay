@@ -5,4 +5,4 @@ export {
   toRoomChatId,
 } from './chatId.js';
 export { createMessageId, isValidMessageDraft } from './message.js';
-export { createChatService } from './service.js';
+export { createChatService, getChatService } from './service.js';

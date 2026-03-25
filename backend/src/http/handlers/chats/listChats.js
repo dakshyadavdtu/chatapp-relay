@@ -1,8 +1,6 @@
 import { jsonErr, jsonOk } from '../../json.js';
-import { getSession } from '../../../auth/session.js';
-import { createStorage } from '../../../storage/index.js';
-import { createChatService } from '../../../chat/service.js';
-import { chatListPayload } from '../../../chat/listPayload.js';
+import { getChatService } from '../../../chat/service.js';
+import { getUserId } from '../../../chat/user.js';
 
 export async function handleApiChatsList(ctx, res) {
   if (ctx.method !== 'GET' && ctx.method !== 'HEAD') {
@@ -15,13 +13,7 @@ export async function handleApiChatsList(ctx, res) {
     return;
   }
 
-  const session = await getSession(ctx.req);
-  const userId = session?.user?.id ?? 'u1';
-
-  const storage = createStorage();
-  const chat = createChatService(storage);
-  const chats = await chat.listChatsForUser(userId);
-
-  jsonOk(res, chatListPayload(chats, userId));
+  const userId = await getUserId(ctx.req);
+  const body = await getChatService().chatListBody(userId);
+  jsonOk(res, body);
 }
-
