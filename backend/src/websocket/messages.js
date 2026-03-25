@@ -1,3 +1,5 @@
+import { routeClientEvent } from './events.js';
+
 function rawToUtf8(rawData) {
   if (Buffer.isBuffer(rawData)) {
     return rawData.toString('utf8');
@@ -14,7 +16,7 @@ function rawToUtf8(rawData) {
   return '';
 }
 
-export function dispatchIncomingMessage(ws, rawData, _ctx) {
+export function dispatchIncomingMessage(ws, rawData, ctx) {
   const text = rawToUtf8(rawData).trim();
   if (!text) {
     return;
@@ -28,7 +30,5 @@ export function dispatchIncomingMessage(ws, rawData, _ctx) {
   if (!parsed || typeof parsed !== 'object') {
     return;
   }
-  if (parsed.type === 'ping') {
-    ws.send(JSON.stringify({ type: 'pong', ts: Date.now() }));
-  }
+  routeClientEvent(ws, parsed, ctx);
 }
