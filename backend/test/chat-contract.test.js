@@ -41,7 +41,7 @@ test('GET /api/chats rows use chatId and type', async () => {
   assert.equal(row.unreadCount, 0);
 });
 
-test('GET /api/chats/:id/messages uses content on wire', async () => {
+test('GET messages JSON uses content not body', async () => {
   const storage = getStorage();
   const bodyText = `hello-${Date.now()}`;
   await storage.messages.append({ chatId: 'c1', body: bodyText, senderId: 'u1' });

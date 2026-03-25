@@ -64,7 +64,7 @@ test('chat service delegates to storage', async () => {
   assert.equal(byId?.id, appended.id);
 });
 
-test('chatListBody nests chats under chats', async () => {
+test('chatListBody has chats array', async () => {
   const storage = createStorage();
   const chat = createChatService(storage);
   const body = await chat.chatListBody('u1');

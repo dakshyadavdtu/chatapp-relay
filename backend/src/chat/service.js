@@ -28,11 +28,11 @@ export function createChatService(storage) {
     },
     async messageListBody(userId, chatId, query) {
       const { limit, beforeTs } = parseMessageListQuery(query);
-      const chatRow = await storage.chats.get(chatId);
-      if (!chatRow) {
+      const chat = await storage.chats.get(chatId);
+      if (!chat) {
         return { ok: false, status: 404, code: 'CHAT_NOT_FOUND', message: 'Chat not found' };
       }
-      const members = Array.isArray(chatRow.members) ? chatRow.members : [];
+      const members = Array.isArray(chat.members) ? chat.members : [];
       if (!members.includes(userId)) {
         return { ok: false, status: 403, code: 'CHAT_ACCESS_DENIED', message: 'Access denied' };
       }
@@ -48,11 +48,11 @@ export function createChatService(storage) {
   };
 }
 
-let shared;
+let svc;
 
 export function getChatService() {
-  if (!shared) {
-    shared = createChatService(getStorage());
+  if (!svc) {
+    svc = createChatService(getStorage());
   }
-  return shared;
+  return svc;
 }

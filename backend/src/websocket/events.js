@@ -11,15 +11,15 @@ export function routeClientEvent(ws, msg, ctx) {
     return;
   }
   if (t === 'chat') {
-    handleChatEvent(ws, msg, ctx);
+    onChatEvent(ws, msg, ctx);
     return;
   }
   if (t === 'message') {
-    handleMessageEvent(ws, msg, ctx);
+    onMessageEvent(ws, msg, ctx);
     return;
   }
 }
 
-export function handleChatEvent(_ws, _msg, _ctx) {}
+export function onChatEvent(_ws, _msg, _ctx) {}
 
-export function handleMessageEvent(_ws, _msg, _ctx) {}
+export function onMessageEvent(_ws, _msg, _ctx) {}

@@ -18,8 +18,8 @@ function labelForChat(chat) {
 function messageErrorText(code) {
   const map = {
     CHAT_NOT_FOUND: 'Chat not found.',
-    CHAT_ACCESS_DENIED: 'You cannot open this chat.',
-    bad_response: 'Unexpected message response.',
+    CHAT_ACCESS_DENIED: 'No access to this chat.',
+    bad_response: 'Bad message response.',
     fetch_failed: 'Could not load messages.',
   };
   return map[code] ?? 'Could not load messages.';
@@ -94,8 +94,8 @@ export async function renderChatPage(container) {
     statusEl.textContent = 'Loading…';
   } else if (chatState.loadStatus === 'error') {
     const map = {
-      not_available: 'Chat list not available on server yet',
-      bad_response: 'Unexpected response from server',
+      not_available: 'Chat list not available',
+      bad_response: 'Bad response from server',
       fetch_failed: 'Could not load chat list',
     };
     statusEl.textContent = map[chatState.loadError] ?? 'Could not load chat list';
