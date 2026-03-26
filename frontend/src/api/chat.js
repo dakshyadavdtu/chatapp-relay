@@ -1,5 +1,4 @@
-import { getJson } from './client.js';
-import { postJson } from './client.js';
+import { getJson, postJson } from './client.js';
 
 export async function listChats() {
   try {

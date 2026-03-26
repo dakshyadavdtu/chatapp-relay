@@ -15,6 +15,8 @@ export const chatState = {
 
 export function setActiveChatId(chatId) {
   chatState.activeChatId = chatId;
+  chatState.sendStatus = 'idle';
+  chatState.sendError = null;
 }
 
 export function getActiveRecipientId() {
