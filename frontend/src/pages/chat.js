@@ -1,4 +1,5 @@
 import {
+  loadActiveChat,
   chatState,
   loadChats,
   loadMessages,
@@ -44,6 +45,11 @@ export async function renderChatPage(container) {
     messageWrap.replaceChildren();
     if (!chatId) {
       return;
+    }
+    await loadActiveChat(chatId);
+    if (chatState.activeChatStatus === 'ok' && chatState.activeChat) {
+      const label = labelForChat(chatState.activeChat);
+      mainHint.textContent = `Chat: ${label}`;
     }
     const loading = document.createElement('p');
     loading.className = 'chat-empty';

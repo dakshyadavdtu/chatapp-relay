@@ -16,3 +16,8 @@ export async function listMessages(chatId) {
   const path = `/api/chats/${encodeURIComponent(chatId)}/messages`;
   return getJson(path);
 }
+
+export async function getChat(chatId) {
+  const path = `/api/chats/${encodeURIComponent(chatId)}`;
+  return getJson(path);
+}
