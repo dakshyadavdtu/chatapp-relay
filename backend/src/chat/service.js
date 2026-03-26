@@ -1,7 +1,10 @@
 import { getStorage } from '../storage/index.js';
 import { toDirectChatId } from './chatId.js';
+import { notifyMessageCreated } from './hooks.js';
 import { chatListPayload, chatRowPayload } from './listPayload.js';
 import { messageListPayload, parseMessageListQuery } from './messageListPayload.js';
+
+const MAX_MESSAGE_CONTENT_LENGTH = 2000;
 
 export function createChatService(storage) {
   if (!storage || typeof storage !== 'object') {
@@ -32,6 +35,14 @@ export function createChatService(storage) {
       if (!content) {
         return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'content required' };
       }
+      if (content.length > MAX_MESSAGE_CONTENT_LENGTH) {
+        return {
+          ok: false,
+          status: 400,
+          code: 'CONTENT_TOO_LONG',
+          message: `content exceeds ${MAX_MESSAGE_CONTENT_LENGTH}`,
+        };
+      }
       const senderId = String(userId);
       if (senderId === recipientId) {
         return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'Cannot send to self' };
@@ -52,6 +63,15 @@ export function createChatService(storage) {
         chatId: chat.id,
         senderId,
         body: content,
+      });
+      notifyMessageCreated({
+        type: 'message.created',
+        messageId: created.id,
+        chatId: created.chatId,
+        senderId: created.senderId,
+        recipientId,
+        content: created.body,
+        createdAt: created.createdAt,
       });
       return {
         ok: true,

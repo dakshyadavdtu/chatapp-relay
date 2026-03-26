@@ -6,6 +6,7 @@ import {
   isDirectChatId,
   isRoomChatId,
   isValidMessageDraft,
+  setOnMessageCreated,
   toDirectChatId,
   toRoomChatId,
 } from '../src/chat/index.js';
@@ -93,6 +94,32 @@ test('sendMessageBody creates direct chat message', async () => {
   assert.equal(out.status, 201);
   assert.equal(out.data.message.chatId, 'direct:u1:u2');
   assert.equal(out.data.message.content, 'hello');
+});
+
+test('sendMessageBody triggers message created hook', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  let seen = null;
+  setOnMessageCreated((evt) => {
+    seen = evt;
+  });
+
+  await chat.sendMessageBody('u1', { recipientId: 'u2', content: 'hello hook' });
+
+  assert.equal(seen?.type, 'message.created');
+  assert.equal(seen?.chatId, 'direct:u1:u2');
+  setOnMessageCreated(() => {});
+});
+
+test('sendMessageBody rejects long content', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const out = await chat.sendMessageBody('u1', {
+    recipientId: 'u2',
+    content: 'x'.repeat(2001),
+  });
+  assert.equal(out.ok, false);
+  assert.equal(out.code, 'CONTENT_TOO_LONG');
 });
 
 test('chatBody returns a single chat row', async () => {

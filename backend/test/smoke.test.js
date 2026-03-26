@@ -259,3 +259,18 @@ test('POST /api/chat/send creates message', async () => {
   assert.equal(body.data?.message?.recipientId, 'u2');
   assert.equal(body.data?.message?.content, 'hi there');
 });
+
+test('POST /api/chat/send rejects long content', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/chat/send', {
+    recipientId: 'u2',
+    content: 'x'.repeat(2001),
+  });
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 400);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'CONTENT_TOO_LONG');
+});
