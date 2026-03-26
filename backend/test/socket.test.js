@@ -43,3 +43,52 @@ test('websocket ping message gets pong', async () => {
     server.close((err) => (err ? reject(err) : resolve()));
   });
 });
+
+test('send message emits websocket message.created event', async () => {
+  const server = createServer(createHttpHandler());
+  attachWebSocket(server);
+
+  await new Promise((resolve, reject) => {
+    server.listen(0, (err) => (err ? reject(err) : resolve()));
+  });
+
+  const { port } = server.address();
+  const ws = new WebSocket(`ws://127.0.0.1:${port}/`);
+  await new Promise((resolve, reject) => {
+    ws.once('open', resolve);
+    ws.once('error', reject);
+  });
+
+  const waitEvent = new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('event timeout')), 3000);
+    ws.on('message', (data) => {
+      const msg = JSON.parse(data.toString());
+      if (msg?.type === 'message.created') {
+        clearTimeout(t);
+        resolve(msg);
+      }
+    });
+  });
+
+  const sendRes = await fetch(`http://127.0.0.1:${port}/api/chat/send`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ recipientId: 'u2', content: 'ws send test' }),
+  });
+  assert.equal(sendRes.status, 201);
+
+  const evt = await waitEvent;
+  assert.equal(evt.type, 'message.created');
+  assert.equal(evt.message?.chatId, 'direct:u1:u2');
+  assert.equal(evt.message?.content, 'ws send test');
+
+  await new Promise((resolve, reject) => {
+    ws.once('close', resolve);
+    ws.close();
+    setTimeout(() => reject(new Error('close timeout')), 3000);
+  });
+
+  await new Promise((resolve, reject) => {
+    server.close((err) => (err ? reject(err) : resolve()));
+  });
+});

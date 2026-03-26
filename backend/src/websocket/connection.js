@@ -2,11 +2,22 @@ import { randomUUID } from 'node:crypto';
 import { dispatchIncomingMessage } from './messages.js';
 import { onConnectionClose, onConnectionOpen } from './presence.js';
 
-export function handleConnection(ws, req) {
+function sendJson(ws, payload) {
+  ws.send(JSON.stringify(payload));
+}
+
+export function handleConnection(ws, req, hooks = {}) {
   const ctx = {
     id: randomUUID(),
     remoteAddress: req.socket?.remoteAddress ?? null,
+    ws,
+    send(payload) {
+      sendJson(ws, payload);
+    },
   };
+  if (typeof hooks.onOpen === 'function') {
+    hooks.onOpen(ctx);
+  }
   onConnectionOpen(ctx);
   let closed = false;
   const closeOnce = () => {
@@ -14,6 +25,9 @@ export function handleConnection(ws, req) {
       return;
     }
     closed = true;
+    if (typeof hooks.onClose === 'function') {
+      hooks.onClose(ctx);
+    }
     onConnectionClose(ctx);
   };
   ws.on('message', (data) => {
