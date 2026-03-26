@@ -7,8 +7,14 @@ export async function renderHome(container) {
   container.append(title);
 
   const sessionLine = document.createElement('p');
-  sessionLine.textContent =
-    authState.status === 'signed_in' ? 'Session: signed in' : 'Session: signed out';
+  if (authState.status === 'checking') {
+    sessionLine.textContent = 'Session: checking';
+  } else if (authState.status === 'signed_in') {
+    const name = authState.user?.username || authState.user?.name || authState.user?.id || 'user';
+    sessionLine.textContent = `Session: signed in (${name})`;
+  } else {
+    sessionLine.textContent = 'Session: signed out';
+  }
   container.append(sessionLine);
 
   const line = document.createElement('p');

@@ -21,8 +21,14 @@ export function createLayout() {
 
   const status = document.createElement('span');
   status.className = 'app-auth-status';
-  status.textContent =
-    authState.status === 'signed_in' ? 'Signed in' : 'Signed out';
+  if (authState.status === 'checking') {
+    status.textContent = 'Checking session';
+  } else if (authState.status === 'signed_in') {
+    const name = authState.user?.username || authState.user?.name || authState.user?.id || 'user';
+    status.textContent = `Signed in as ${name}`;
+  } else {
+    status.textContent = 'Signed out';
+  }
 
   nav.append(aHome, document.createTextNode(' '), sep, document.createTextNode(' '), aChat, document.createTextNode(' '), status);
 
