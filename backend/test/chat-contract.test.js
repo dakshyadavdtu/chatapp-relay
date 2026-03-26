@@ -36,7 +36,7 @@ test('GET /api/chats rows use chatId and type', async () => {
   await handler(req, res);
   const body = JSON.parse(res.body);
   const row = body.data.chats[0];
-  assert.equal(row.chatId, 'c1');
+  assert.equal(row.chatId, 'direct:u1:u2');
   assert.equal(row.type, 'direct');
   assert.equal(row.unreadCount, 0);
 });
@@ -44,9 +44,9 @@ test('GET /api/chats rows use chatId and type', async () => {
 test('GET messages JSON uses content not body', async () => {
   const storage = getStorage();
   const bodyText = `hello-${Date.now()}`;
-  await storage.messages.append({ chatId: 'c1', body: bodyText, senderId: 'u1' });
+  await storage.messages.append({ chatId: 'direct:u1:u2', body: bodyText, senderId: 'u1' });
   const handler = createHttpHandler();
-  const req = { url: '/api/chats/c1/messages', method: 'GET' };
+  const req = { url: '/api/chats/direct%3Au1%3Au2/messages', method: 'GET' };
   const res = makeRes();
   await handler(req, res);
   assert.equal(res.statusCode, 200);

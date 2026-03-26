@@ -16,6 +16,6 @@ test('storage facade exposes chats messages rooms', () => {
 test('storage methods validate inputs', async () => {
   const s = createStorage();
   await assert.rejects(() => s.messages.append({}), /chatId required/i);
-  const msgs = await s.messages.listByChatId('c1');
+  const msgs = await s.messages.listByChatId('direct:u1:u2');
   assert.equal(Array.isArray(msgs), true);
 });

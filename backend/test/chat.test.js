@@ -55,12 +55,12 @@ test('chat service delegates to storage', async () => {
   const chat = createChatService(storage);
   const chats = await chat.listChatsForUser('u1');
   assert.equal(Array.isArray(chats), true);
-  const c1 = await chat.getChat('c1');
-  assert.equal(c1?.id, 'c1');
-  const msgs = await chat.listMessages('c1', {});
+  const c1 = await chat.getChat('direct:u1:u2');
+  assert.equal(c1?.id, 'direct:u1:u2');
+  const msgs = await chat.listMessages('direct:u1:u2', {});
   assert.equal(Array.isArray(msgs), true);
-  const appended = await chat.appendMessage({ chatId: 'c1', body: 'hi', senderId: 'u1' });
-  assert.equal(appended.chatId, 'c1');
+  const appended = await chat.appendMessage({ chatId: 'direct:u1:u2', body: 'hi', senderId: 'u1' });
+  assert.equal(appended.chatId, 'direct:u1:u2');
   const byId = await chat.getMessage(appended.id);
   assert.equal(byId?.id, appended.id);
 });
@@ -70,14 +70,14 @@ test('chatListBody has chats array', async () => {
   const chat = createChatService(storage);
   const body = await chat.chatListBody('u1');
   assert.ok(Array.isArray(body.chats));
-  assert.equal(body.chats.some((c) => c.chatId === 'c1'), true);
+  assert.equal(body.chats.some((c) => c.chatId === 'direct:u1:u2'), true);
 });
 
 test('messageListBody returns messages and meta', async () => {
   const storage = createStorage();
   const chat = createChatService(storage);
   const q = new URLSearchParams('');
-  const out = await chat.messageListBody('u1', 'c1', q);
+  const out = await chat.messageListBody('u1', 'direct:u1:u2', q);
   assert.equal(out.ok, true);
   assert.ok(Array.isArray(out.data.messages));
   assert.equal(typeof out.data.meta.limit, 'number');
@@ -125,7 +125,7 @@ test('sendMessageBody rejects long content', async () => {
 test('chatBody returns a single chat row', async () => {
   const storage = createStorage();
   const chat = createChatService(storage);
-  const out = await chat.chatBody('u1', 'c1');
+  const out = await chat.chatBody('u1', 'direct:u1:u2');
   assert.equal(out.ok, true);
-  assert.equal(out.data.chat.chatId, 'c1');
+  assert.equal(out.data.chat.chatId, 'direct:u1:u2');
 });

@@ -32,10 +32,10 @@ export function createMemoryStorage() {
 
   const seedUserId = 'u1';
   ensureChat({
-    id: 'c1',
+    id: 'direct:u1:u2',
     kind: 'direct',
     title: 'Test chat',
-    members: [seedUserId],
+    members: [seedUserId, 'u2'],
     updatedAt: now(),
   });
 

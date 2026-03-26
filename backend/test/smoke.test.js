@@ -122,7 +122,7 @@ test('GET /api/chats returns list', async () => {
 
 test('GET /api/chats/:chatId returns one chat', async () => {
   const handler = createHttpHandler();
-  const req = { url: '/api/chats/c1', method: 'GET' };
+  const req = { url: '/api/chats/direct%3Au1%3Au2', method: 'GET' };
   const res = makeRes();
 
   await handler(req, res);
@@ -130,7 +130,7 @@ test('GET /api/chats/:chatId returns one chat', async () => {
   assert.equal(res.statusCode, 200);
   const body = JSON.parse(res.body);
   assert.equal(body.success, true);
-  assert.equal(body.data?.chat?.chatId, 'c1');
+  assert.equal(body.data?.chat?.chatId, 'direct:u1:u2');
 });
 
 test('GET /api/chats/:chatId 404 when missing', async () => {
@@ -147,7 +147,7 @@ test('GET /api/chats/:chatId 404 when missing', async () => {
 
 test('GET /api/chats/:chatId/messages returns shaped payload', async () => {
   const handler = createHttpHandler();
-  const req = { url: '/api/chats/c1/messages', method: 'GET' };
+  const req = { url: '/api/chats/direct%3Au1%3Au2/messages', method: 'GET' };
   const res = makeRes();
 
   await handler(req, res);
