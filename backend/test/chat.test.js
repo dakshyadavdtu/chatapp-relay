@@ -129,3 +129,19 @@ test('chatBody returns a single chat row', async () => {
   assert.equal(out.ok, true);
   assert.equal(out.data.chat.chatId, 'direct:u1:u2');
 });
+
+test('chatBody denies user outside chat members', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const out = await chat.chatBody('u3', 'direct:u1:u2');
+  assert.equal(out.ok, false);
+  assert.equal(out.code, 'CHAT_ACCESS_DENIED');
+});
+
+test('messageListBody denies user outside chat members', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const out = await chat.messageListBody('u3', 'direct:u1:u2', new URLSearchParams(''));
+  assert.equal(out.ok, false);
+  assert.equal(out.code, 'CHAT_ACCESS_DENIED');
+});

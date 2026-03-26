@@ -13,6 +13,14 @@ function makeJsonPost(url, payload) {
   return stream;
 }
 
+function makePlainPost(url, body) {
+  const stream = Readable.from([Buffer.from(body)]);
+  stream.url = url;
+  stream.method = 'POST';
+  stream.headers = { 'content-type': 'text/plain' };
+  return stream;
+}
+
 test('health service', () => {
   assert.deepEqual(getHealth(), { ok: true });
 });
@@ -273,4 +281,28 @@ test('POST /api/chat/send rejects long content', async () => {
   assert.equal(res.statusCode, 400);
   const body = JSON.parse(res.body);
   assert.equal(body.code, 'CONTENT_TOO_LONG');
+});
+
+test('POST /api/chat/send rejects missing recipientId', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/chat/send', { content: 'hello' });
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 400);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'INVALID_PAYLOAD');
+});
+
+test('POST /api/chat/send rejects unsupported content-type', async () => {
+  const handler = createHttpHandler();
+  const req = makePlainPost('/api/chat/send', 'hello');
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 415);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'UNSUPPORTED_MEDIA_TYPE');
 });

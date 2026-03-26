@@ -80,6 +80,8 @@ test('send message emits websocket message.created event', async () => {
   const evt = await waitEvent;
   assert.equal(evt.type, 'message.created');
   assert.equal(evt.message?.chatId, 'direct:u1:u2');
+  assert.equal(evt.message?.recipientId, 'u2');
+  assert.equal(evt.message?.senderId, 'u1');
   assert.equal(evt.message?.content, 'ws send test');
 
   await new Promise((resolve, reject) => {
