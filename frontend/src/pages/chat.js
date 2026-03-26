@@ -1,4 +1,5 @@
 import {
+  getMessagesState,
   loadActiveChat,
   chatState,
   loadChats,
@@ -24,6 +25,17 @@ function messageErrorText(code) {
     fetch_failed: 'Could not load messages.',
   };
   return map[code] ?? 'Could not load messages.';
+}
+
+function formatTime(ts) {
+  if (typeof ts !== 'number') {
+    return '';
+  }
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) {
+    return '';
+  }
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 export async function renderChatPage(container) {
@@ -57,14 +69,15 @@ export async function renderChatPage(container) {
     messageWrap.append(loading);
     await loadMessages(chatId);
     messageWrap.replaceChildren();
-    if (chatState.messagesStatus === 'error') {
+    const msgState = getMessagesState(chatId);
+    if (msgState.status === 'error') {
       const p = document.createElement('p');
       p.className = 'chat-empty';
-      p.textContent = messageErrorText(chatState.messagesError);
+      p.textContent = messageErrorText(msgState.error);
       messageWrap.append(p);
       return;
     }
-    if (chatState.activeMessages.length === 0) {
+    if (msgState.items.length === 0) {
       const p = document.createElement('p');
       p.className = 'chat-empty';
       p.textContent = 'No messages yet.';
@@ -73,12 +86,13 @@ export async function renderChatPage(container) {
     }
     const ul = document.createElement('ul');
     ul.className = 'chat-message-list';
-    for (const m of chatState.activeMessages) {
+    for (const m of msgState.items) {
       const li = document.createElement('li');
       li.className = 'chat-message-list-item';
       const who = m.senderId ?? '?';
       const text = typeof m.content === 'string' ? m.content : '';
-      li.textContent = `${who}: ${text}`;
+      const at = formatTime(m.createdAt);
+      li.textContent = at ? `${who} (${at}): ${text}` : `${who}: ${text}`;
       ul.append(li);
     }
     messageWrap.append(ul);

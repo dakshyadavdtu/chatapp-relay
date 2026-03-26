@@ -8,10 +8,7 @@ export const chatState = {
   chats: [],
   loadStatus: 'idle',
   loadError: null,
-  activeMessages: [],
-  messagesMeta: null,
-  messagesStatus: 'idle',
-  messagesError: null,
+  messagesByChat: {},
 };
 
 export function setActiveChatId(chatId) {
@@ -58,31 +55,38 @@ export async function loadChats() {
 
 export async function loadMessages(chatId) {
   if (!chatId) {
-    chatState.activeMessages = [];
-    chatState.messagesMeta = null;
-    chatState.messagesStatus = 'idle';
-    chatState.messagesError = null;
     return;
   }
-  chatState.messagesStatus = 'loading';
-  chatState.messagesError = null;
+  chatState.messagesByChat[chatId] = {
+    items: chatState.messagesByChat[chatId]?.items ?? [],
+    meta: chatState.messagesByChat[chatId]?.meta ?? null,
+    status: 'loading',
+    error: null,
+  };
   try {
     const r = await listMessages(chatId);
     if (!r?.success || !Array.isArray(r?.data?.messages)) {
-      chatState.activeMessages = [];
-      chatState.messagesMeta = null;
-      chatState.messagesStatus = 'error';
-      chatState.messagesError = 'bad_response';
+      chatState.messagesByChat[chatId] = {
+        items: [],
+        meta: null,
+        status: 'error',
+        error: 'bad_response',
+      };
       return;
     }
-    chatState.activeMessages = r.data.messages;
-    chatState.messagesMeta = r.data.meta ?? null;
-    chatState.messagesStatus = 'ok';
+    chatState.messagesByChat[chatId] = {
+      items: r.data.messages,
+      meta: r.data.meta ?? null,
+      status: 'ok',
+      error: null,
+    };
   } catch (e) {
-    chatState.activeMessages = [];
-    chatState.messagesMeta = null;
-    chatState.messagesStatus = 'error';
-    chatState.messagesError = e?.code ?? 'fetch_failed';
+    chatState.messagesByChat[chatId] = {
+      items: [],
+      meta: null,
+      status: 'error',
+      error: e?.code ?? 'fetch_failed',
+    };
   }
 }
 
@@ -110,4 +114,18 @@ export async function loadActiveChat(chatId) {
     chatState.activeChatStatus = 'error';
     chatState.activeChatError = e?.code ?? 'fetch_failed';
   }
+}
+
+export function getMessagesState(chatId) {
+  if (!chatId) {
+    return { items: [], meta: null, status: 'idle', error: null };
+  }
+  return (
+    chatState.messagesByChat[chatId] ?? {
+      items: [],
+      meta: null,
+      status: 'idle',
+      error: null,
+    }
+  );
 }
