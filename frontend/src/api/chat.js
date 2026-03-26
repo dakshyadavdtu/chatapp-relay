@@ -1,5 +1,5 @@
-import { apiUrl } from '../config/api.js';
 import { getJson } from './client.js';
+import { postJson } from './client.js';
 
 export async function listChats() {
   try {
@@ -20,4 +20,8 @@ export async function listMessages(chatId) {
 export async function getChat(chatId) {
   const path = `/api/chats/${encodeURIComponent(chatId)}`;
   return getJson(path);
+}
+
+export async function sendMessage(recipientId, content) {
+  return postJson('/api/chat/send', { recipientId, content });
 }

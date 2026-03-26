@@ -2,8 +2,10 @@ export { applySessionResult, authState, loadSession, setAuthUser } from './auth/
 export {
   chatState,
   getMessagesState,
+  getActiveRecipientId,
   loadActiveChat,
   loadChats,
   loadMessages,
+  sendActiveMessage,
   setActiveChatId,
 } from './chat/state.js';

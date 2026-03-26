@@ -1,9 +1,11 @@
 import {
+  getActiveRecipientId,
   getMessagesState,
   loadActiveChat,
   chatState,
   loadChats,
   loadMessages,
+  sendActiveMessage,
   setActiveChatId,
 } from '../features/chat/state.js';
 
@@ -25,6 +27,16 @@ function messageErrorText(code) {
     fetch_failed: 'Could not load messages.',
   };
   return map[code] ?? 'Could not load messages.';
+}
+
+function sendErrorText(code) {
+  const map = {
+    INVALID_PAYLOAD: 'Message text is required.',
+    CONTENT_TOO_LONG: 'Message is too long.',
+    NO_RECIPIENT: 'Cannot resolve chat recipient.',
+    SEND_FAILED: 'Could not send message.',
+  };
+  return map[code] ?? 'Could not send message.';
 }
 
 function formatTime(ts) {
@@ -50,6 +62,19 @@ export async function renderChatPage(container) {
   mainHint.className = 'chat-empty';
   const messageWrap = document.createElement('div');
   messageWrap.className = 'chat-messages';
+  const composer = document.createElement('form');
+  composer.className = 'chat-composer';
+  const input = document.createElement('input');
+  input.className = 'chat-composer-input';
+  input.type = 'text';
+  input.placeholder = 'Type a message';
+  const sendBtn = document.createElement('button');
+  sendBtn.className = 'chat-composer-send';
+  sendBtn.type = 'submit';
+  sendBtn.textContent = 'Send';
+  const sendHint = document.createElement('p');
+  sendHint.className = 'chat-composer-hint';
+  composer.append(input, sendBtn);
 
   async function renderMessagesArea() {
     const chatId = chatState.activeChatId;
@@ -63,6 +88,11 @@ export async function renderChatPage(container) {
       const label = labelForChat(chatState.activeChat);
       mainHint.textContent = `Chat: ${label}`;
     }
+    const recipientId = getActiveRecipientId();
+    const canSend = Boolean(recipientId);
+    input.disabled = !canSend;
+    sendBtn.disabled = !canSend;
+    sendHint.textContent = canSend ? '' : 'Sending is only available for direct chats.';
     const loading = document.createElement('p');
     loading.className = 'chat-empty';
     loading.textContent = 'Loading messages…';
@@ -148,7 +178,28 @@ export async function renderChatPage(container) {
 
   sidebar.append(sideTitle, statusEl, listEl);
 
-  main.append(mainHint, messageWrap);
+  composer.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) {
+      sendHint.textContent = 'Enter a message.';
+      return;
+    }
+    sendBtn.disabled = true;
+    sendHint.textContent = 'Sending…';
+    const out = await sendActiveMessage(text);
+    if (!out.ok) {
+      sendHint.textContent = sendErrorText(out.code);
+      sendBtn.disabled = !getActiveRecipientId();
+      return;
+    }
+    input.value = '';
+    sendHint.textContent = '';
+    sendBtn.disabled = !getActiveRecipientId();
+    await renderMessagesArea();
+  });
+
+  main.append(mainHint, messageWrap, composer, sendHint);
   await renderMessagesArea();
 
   root.append(sidebar, main);

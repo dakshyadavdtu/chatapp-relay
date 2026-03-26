@@ -1,4 +1,4 @@
-import { getChat, listChats, listMessages } from '../../api/chat.js';
+import { getChat, listChats, listMessages, sendMessage } from '../../api/chat.js';
 
 export const chatState = {
   activeChatId: null,
@@ -9,10 +9,20 @@ export const chatState = {
   loadStatus: 'idle',
   loadError: null,
   messagesByChat: {},
+  sendStatus: 'idle',
+  sendError: null,
 };
 
 export function setActiveChatId(chatId) {
   chatState.activeChatId = chatId;
+}
+
+export function getActiveRecipientId() {
+  const list = Array.isArray(chatState.activeChat?.participants)
+    ? chatState.activeChat.participants
+    : [];
+  const id = list.find((v) => typeof v === 'string' && v.trim() !== '');
+  return id ?? null;
 }
 
 export async function loadChats() {
@@ -128,4 +138,30 @@ export function getMessagesState(chatId) {
       error: null,
     }
   );
+}
+
+export async function sendActiveMessage(content) {
+  const chatId = chatState.activeChatId;
+  if (!chatId) {
+    return { ok: false, code: 'NO_ACTIVE_CHAT' };
+  }
+  const recipientId = getActiveRecipientId();
+  if (!recipientId) {
+    chatState.sendStatus = 'error';
+    chatState.sendError = 'NO_RECIPIENT';
+    return { ok: false, code: 'NO_RECIPIENT' };
+  }
+  chatState.sendStatus = 'sending';
+  chatState.sendError = null;
+  try {
+    const res = await sendMessage(recipientId, content);
+    chatState.sendStatus = 'ok';
+    chatState.sendError = null;
+    await loadMessages(chatId);
+    return { ok: true, data: res?.data?.message ?? null };
+  } catch (e) {
+    chatState.sendStatus = 'error';
+    chatState.sendError = e?.code ?? 'SEND_FAILED';
+    return { ok: false, code: chatState.sendError };
+  }
 }

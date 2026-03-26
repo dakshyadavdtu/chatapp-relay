@@ -115,3 +115,33 @@ body {
   border-bottom: 1px solid #eee;
   font-size: 0.95rem;
 }
+
+.chat-composer {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-composer-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.chat-composer-send {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.chat-composer-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
