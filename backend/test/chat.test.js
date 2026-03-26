@@ -94,3 +94,11 @@ test('sendMessageBody creates direct chat message', async () => {
   assert.equal(out.data.message.chatId, 'direct:u1:u2');
   assert.equal(out.data.message.content, 'hello');
 });
+
+test('chatBody returns a single chat row', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const out = await chat.chatBody('u1', 'c1');
+  assert.equal(out.ok, true);
+  assert.equal(out.data.chat.chatId, 'c1');
+});

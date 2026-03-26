@@ -120,6 +120,31 @@ test('GET /api/chats returns list', async () => {
   assert.equal(Array.isArray(body.data?.chats), true);
 });
 
+test('GET /api/chats/:chatId returns one chat', async () => {
+  const handler = createHttpHandler();
+  const req = { url: '/api/chats/c1', method: 'GET' };
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 200);
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, true);
+  assert.equal(body.data?.chat?.chatId, 'c1');
+});
+
+test('GET /api/chats/:chatId 404 when missing', async () => {
+  const handler = createHttpHandler();
+  const req = { url: '/api/chats/unknown-chat', method: 'GET' };
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 404);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'CHAT_NOT_FOUND');
+});
+
 test('GET /api/chats/:chatId/messages returns shaped payload', async () => {
   const handler = createHttpHandler();
   const req = { url: '/api/chats/c1/messages', method: 'GET' };

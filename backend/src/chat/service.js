@@ -1,6 +1,6 @@
 import { getStorage } from '../storage/index.js';
 import { toDirectChatId } from './chatId.js';
-import { chatListPayload } from './listPayload.js';
+import { chatListPayload, chatRowPayload } from './listPayload.js';
 import { messageListPayload, parseMessageListQuery } from './messageListPayload.js';
 
 export function createChatService(storage) {
@@ -72,8 +72,7 @@ export function createChatService(storage) {
       const rows = await storage.chats.listForUser(userId);
       return chatListPayload(rows, userId);
     },
-    async messageListBody(userId, chatId, query) {
-      const { limit, beforeTs } = parseMessageListQuery(query);
+    async chatBody(userId, chatId) {
       const chat = await storage.chats.get(chatId);
       if (!chat) {
         return { ok: false, status: 404, code: 'CHAT_NOT_FOUND', message: 'Chat not found' };
@@ -82,6 +81,14 @@ export function createChatService(storage) {
       if (!members.includes(userId)) {
         return { ok: false, status: 403, code: 'CHAT_ACCESS_DENIED', message: 'Access denied' };
       }
+      return { ok: true, data: { chat: chatRowPayload(chat, userId) } };
+    },
+    async messageListBody(userId, chatId, query) {
+      const open = await this.chatBody(userId, chatId);
+      if (!open.ok) {
+        return open;
+      }
+      const { limit, beforeTs } = parseMessageListQuery(query);
       const messages = await storage.messages.listByChatId(chatId, {
         limit,
         beforeTs: beforeTs === null ? undefined : beforeTs,

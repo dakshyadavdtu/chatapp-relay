@@ -1,14 +1,18 @@
 export function chatListPayload(chats, userId) {
   return {
-    chats: chats.map((c) => ({
-      chatId: c.id,
-      type: c.kind,
-      title: c.title ?? null,
-      participants: (Array.isArray(c.members) ? c.members : []).filter((id) => id !== userId),
-      unreadCount: 0,
-      updatedAt: c.updatedAt ?? null,
-      lastMessage: normalizeLastMessage(c.lastMessage),
-    })),
+    chats: chats.map((c) => chatRowPayload(c, userId)),
+  };
+}
+
+export function chatRowPayload(chat, userId) {
+  return {
+    chatId: chat.id,
+    type: chat.kind,
+    title: chat.title ?? null,
+    participants: (Array.isArray(chat.members) ? chat.members : []).filter((id) => id !== userId),
+    unreadCount: 0,
+    updatedAt: chat.updatedAt ?? null,
+    lastMessage: normalizeLastMessage(chat.lastMessage),
   };
 }
 
