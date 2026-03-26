@@ -8,6 +8,7 @@ import { handleApiHealth } from './handlers/apiHealth.js';
 import { handleApiMe } from './handlers/apiMe.js';
 import { handleApiChatsList } from './handlers/chats/listChats.js';
 import { handleApiChatMessagesList } from './handlers/chats/listMessages.js';
+import { handleApiChatSend } from './handlers/chats/sendMessage.js';
 
 any('/', handleHealth);
 any('/health', handleHealth);
@@ -20,6 +21,7 @@ route(['POST'], '/api/logout', handleAuthLogout);
 route(['POST'], '/api/register', handleAuthRegister);
 route(['GET', 'HEAD'], '/api/chats', handleApiChatsList);
 route(['GET', 'HEAD'], '/api/chats/:chatId/messages', handleApiChatMessagesList);
+route(['POST'], '/api/chat/send', handleApiChatSend);
 
 export { match } from './router.js';
 

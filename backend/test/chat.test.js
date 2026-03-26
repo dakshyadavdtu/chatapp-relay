@@ -81,3 +81,16 @@ test('messageListBody returns messages and meta', async () => {
   assert.ok(Array.isArray(out.data.messages));
   assert.equal(typeof out.data.meta.limit, 'number');
 });
+
+test('sendMessageBody creates direct chat message', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const out = await chat.sendMessageBody('u1', {
+    recipientId: 'u2',
+    content: 'hello',
+  });
+  assert.equal(out.ok, true);
+  assert.equal(out.status, 201);
+  assert.equal(out.data.message.chatId, 'direct:u1:u2');
+  assert.equal(out.data.message.content, 'hello');
+});

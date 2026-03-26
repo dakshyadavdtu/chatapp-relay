@@ -1,4 +1,5 @@
 import { getStorage } from '../storage/index.js';
+import { toDirectChatId } from './chatId.js';
 import { chatListPayload } from './listPayload.js';
 import { messageListPayload, parseMessageListQuery } from './messageListPayload.js';
 
@@ -21,6 +22,51 @@ export function createChatService(storage) {
     },
     async getMessage(messageId) {
       return storage.messages.getById(messageId);
+    },
+    async sendMessageBody(userId, payload) {
+      const recipientId = typeof payload?.recipientId === 'string' ? payload.recipientId.trim() : '';
+      const content = typeof payload?.content === 'string' ? payload.content.trim() : '';
+      if (!recipientId) {
+        return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'recipientId required' };
+      }
+      if (!content) {
+        return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'content required' };
+      }
+      const senderId = String(userId);
+      if (senderId === recipientId) {
+        return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'Cannot send to self' };
+      }
+
+      let chat;
+      if (typeof storage.chats.ensureDirect === 'function') {
+        chat = await storage.chats.ensureDirect(senderId, recipientId);
+      } else {
+        const fallbackId = toDirectChatId(senderId, recipientId);
+        chat = await storage.chats.get(fallbackId);
+      }
+      if (!chat?.id) {
+        return { ok: false, status: 500, code: 'CHAT_ERROR', message: 'Cannot resolve chat' };
+      }
+
+      const created = await storage.messages.append({
+        chatId: chat.id,
+        senderId,
+        body: content,
+      });
+      return {
+        ok: true,
+        status: 201,
+        data: {
+          message: {
+            messageId: created.id,
+            chatId: created.chatId,
+            senderId: created.senderId,
+            recipientId,
+            content: created.body,
+            createdAt: created.createdAt,
+          },
+        },
+      };
     },
     async chatListBody(userId) {
       const rows = await storage.chats.listForUser(userId);

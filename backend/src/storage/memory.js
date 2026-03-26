@@ -1,3 +1,4 @@
+import { toDirectChatId } from '../chat/chatId.js';
 import { createMessageId } from '../chat/message.js';
 
 function now() {
@@ -43,6 +44,23 @@ export function createMemoryStorage() {
     chats: {
       async get(chatId) {
         return chats.get(chatId) ?? null;
+      },
+      async ensureDirect(userIdA, userIdB) {
+        const chatId = toDirectChatId(userIdA, userIdB);
+        if (!chatId) {
+          throw new Error('invalid chat members');
+        }
+        const existing = chats.get(chatId);
+        if (existing) {
+          return existing;
+        }
+        return ensureChat({
+          id: chatId,
+          kind: 'direct',
+          title: null,
+          members: [String(userIdA), String(userIdB)],
+          updatedAt: now(),
+        });
       },
       async listForUser(userId) {
         const out = [];

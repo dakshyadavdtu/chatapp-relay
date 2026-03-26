@@ -220,3 +220,17 @@ test('POST /api/register not implemented', async () => {
   const body = JSON.parse(res.body);
   assert.equal(body.code, 'NOT_IMPLEMENTED');
 });
+
+test('POST /api/chat/send creates message', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/chat/send', { recipientId: 'u2', content: 'hi there' });
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 201);
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, true);
+  assert.equal(body.data?.message?.recipientId, 'u2');
+  assert.equal(body.data?.message?.content, 'hi there');
+});
