@@ -54,4 +54,6 @@ test('GET messages JSON uses content not body', async () => {
   const found = body.data.messages.find((m) => m.content === bodyText);
   assert.ok(found);
   assert.equal(found.body, undefined);
+  assert.equal(found.id, found.messageId);
+  assert.ok(typeof found.id === 'string' && found.id.length > 0);
 });

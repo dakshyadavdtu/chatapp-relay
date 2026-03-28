@@ -264,6 +264,8 @@ test('POST /api/chat/send creates message', async () => {
   assert.equal(res.statusCode, 201);
   const body = JSON.parse(res.body);
   assert.equal(body.success, true);
+  assert.equal(body.data?.message?.id, body.data?.message?.messageId);
+  assert.ok(typeof body.data?.message?.id === 'string');
   assert.equal(body.data?.message?.recipientId, 'u2');
   assert.equal(body.data?.message?.content, 'hi there');
 });
