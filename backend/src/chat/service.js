@@ -78,6 +78,7 @@ export function createChatService(storage) {
         status: 201,
         data: {
           message: {
+            id: created.id,
             messageId: created.id,
             chatId: created.chatId,
             senderId: created.senderId,

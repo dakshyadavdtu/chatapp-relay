@@ -92,6 +92,7 @@ test('sendMessageBody creates direct chat message', async () => {
   });
   assert.equal(out.ok, true);
   assert.equal(out.status, 201);
+  assert.equal(out.data.message.id, out.data.message.messageId);
   assert.equal(out.data.message.chatId, 'direct:u1:u2');
   assert.equal(out.data.message.content, 'hello');
 });

@@ -22,6 +22,7 @@ export function messageListPayload(messages, { limit, beforeTs }) {
 function toMessageWire(m) {
   return {
     id: m.id,
+    messageId: m.id,
     chatId: m.chatId,
     senderId: m.senderId,
     content: typeof m.body === 'string' ? m.body : '',
