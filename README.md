@@ -4,7 +4,7 @@ Relay is a chat app we’re building in the open: a Node server for the API and 
 
 ## Current status
 
-There are early HTTP routes, a websocket connection, and a Vite client that calls `/api` (proxied in dev) with hash routes. Storage is not wired to a real database yet; full chat and persistence are still to come.
+There are early HTTP routes, a Vite client that calls `/api` (proxied in dev) with hash routes (`#/`, `#/chat`), and a WebSocket the chat UI uses when you’re signed in for new messages. The dev client does not proxy WebSocket traffic like `/api`; it defaults to `ws://localhost:3000` unless you set `VITE_WS_URL` in `frontend/.env`. Storage is in-memory for now, not a real database yet.
 
 ## Project structure
 
@@ -36,4 +36,4 @@ npm install
 npm run dev
 ```
 
-If you need custom ports or API URLs, copy `.env.example` to `.env` in `backend/` or `frontend/` and edit there. The web UI uses hash routes (`#/`, `#/chat`) and proxies `/api` to the backend in dev.
+If you need custom ports or API URLs, copy `.env.example` to `.env` in `backend/` or `frontend/` and edit there. In dev, Vite proxies `/api` to the backend; WebSocket URL is separate (see above).
