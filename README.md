@@ -1,6 +1,6 @@
 # Relay
 
-Relay is a chat app we’re building in the open: a Node server for the API and realtime side, and a Vite-based web client. Nothing fancy in the pitch—just a place to grow rooms, messages, and presence over time.
+Relay is a chat app built in the open: Node for the HTTP and WebSocket server, Vite for the client.
 
 ## Current status
 
@@ -36,4 +36,4 @@ npm install
 npm run dev
 ```
 
-If you need custom ports or API URLs, copy `.env.example` to `.env` in `backend/` or `frontend/` and edit there. In dev, Vite proxies `/api` to the backend; WebSocket URL is separate (see above).
+If you need custom ports or URLs, copy `.env.example` to `.env` in `backend/` or `frontend/` and edit there. Vite proxies `/api` in dev only; set `VITE_WS_URL` if the WebSocket host or port differs from the default.

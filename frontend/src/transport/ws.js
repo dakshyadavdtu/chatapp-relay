@@ -86,7 +86,6 @@ export function startJsonSocket({ onJson, onStatus }) {
         scheduleReconnect();
       }
     });
-    socket.addEventListener('error', () => {});
   };
 
   connect();

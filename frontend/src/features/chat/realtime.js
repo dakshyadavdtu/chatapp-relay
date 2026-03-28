@@ -3,7 +3,7 @@ import { startJsonSocket } from '../../transport/ws.js';
 
 let session = null;
 
-export function getRealtimeSocketStatus() {
+export function getChatSocketStatus() {
   return session?.getStatus() ?? 'closed';
 }
 
