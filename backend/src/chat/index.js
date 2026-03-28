@@ -6,4 +6,3 @@ export {
 } from './chatId.js';
 export { createMessageId, isValidMessageDraft } from './message.js';
 export { createChatService, getChatService } from './service.js';
-export { notifyMessageCreated, setOnMessageCreated } from './hooks.js';

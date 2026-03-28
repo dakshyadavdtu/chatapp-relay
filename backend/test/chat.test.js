@@ -6,10 +6,10 @@ import {
   isDirectChatId,
   isRoomChatId,
   isValidMessageDraft,
-  setOnMessageCreated,
   toDirectChatId,
   toRoomChatId,
 } from '../src/chat/index.js';
+import { subscribeMessageCreated } from '../src/realtime/messageCreated.js';
 import { createStorage } from '../src/storage/index.js';
 
 test('toDirectChatId is stable sorted', () => {
@@ -100,7 +100,7 @@ test('sendMessageBody triggers message created hook', async () => {
   const storage = createStorage();
   const chat = createChatService(storage);
   let seen = null;
-  setOnMessageCreated((evt) => {
+  subscribeMessageCreated((evt) => {
     seen = evt;
   });
 
@@ -108,7 +108,7 @@ test('sendMessageBody triggers message created hook', async () => {
 
   assert.equal(seen?.type, 'message.created');
   assert.equal(seen?.chatId, 'direct:u1:u2');
-  setOnMessageCreated(() => {});
+  subscribeMessageCreated(() => {});
 });
 
 test('sendMessageBody rejects long content', async () => {

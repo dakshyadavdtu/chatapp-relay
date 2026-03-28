@@ -1,6 +1,6 @@
 import { getStorage } from '../storage/index.js';
+import { publishMessageCreated } from '../realtime/messageCreated.js';
 import { toDirectChatId } from './chatId.js';
-import { notifyMessageCreated } from './hooks.js';
 import { chatListPayload, chatRowPayload } from './listPayload.js';
 import { messageListPayload, parseMessageListQuery } from './messageListPayload.js';
 
@@ -64,7 +64,7 @@ export function createChatService(storage) {
         senderId,
         body: content,
       });
-      notifyMessageCreated({
+      publishMessageCreated({
         type: 'message.created',
         messageId: created.id,
         chatId: created.chatId,
