@@ -1,4 +1,10 @@
 import { getChat, listChats, listMessages, sendMessage } from '../../api/chat.js';
+import {
+  messageKey,
+  normalizeChatMessage,
+  normalizeMessageListForChat,
+  sortMessagesOldestFirst,
+} from './messageList.js';
 
 export const chatState = {
   activeChatId: null,
@@ -30,8 +36,11 @@ function notifyChatMessages() {
 
 export function applyIncomingMessageCreated(raw) {
   const chatId = raw?.chatId;
-  const id = raw?.id ?? raw?.messageId;
-  if (!chatId || id == null || id === '') {
+  if (!chatId) {
+    return;
+  }
+  const row = normalizeChatMessage(raw, chatId);
+  if (!row) {
     return;
   }
   const prev = chatState.messagesByChat[chatId] ?? {
@@ -41,19 +50,10 @@ export function applyIncomingMessageCreated(raw) {
     error: null,
   };
   const items = Array.isArray(prev.items) ? prev.items : [];
-  if (items.some((m) => String(m.id) === String(id))) {
+  if (items.some((m) => messageKey(m) === row.id)) {
     return;
   }
-  const row = {
-    id,
-    chatId,
-    senderId: raw.senderId ?? null,
-    content: typeof raw.content === 'string' ? raw.content : '',
-    createdAt: raw.createdAt ?? null,
-  };
-  const nextItems = [...items, row].sort(
-    (a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0),
-  );
+  const nextItems = sortMessagesOldestFirst([...items, row]);
   chatState.messagesByChat[chatId] = {
     ...prev,
     items: nextItems,
@@ -139,7 +139,7 @@ export async function loadMessages(chatId) {
       return;
     }
     chatState.messagesByChat[chatId] = {
-      items: r.data.messages,
+      items: normalizeMessageListForChat(r.data.messages, chatId),
       meta: r.data.meta ?? null,
       status: 'ok',
       error: null,

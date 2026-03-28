@@ -1,4 +1,5 @@
 import { getRoute } from '../app/router.js';
+import { messageKey } from '../features/chat/messageList.js';
 import {
   getActiveRecipientId,
   getMessagesState,
@@ -128,6 +129,10 @@ export async function renderChatPage(container) {
     for (const m of msgState.items) {
       const li = document.createElement('li');
       li.className = 'chat-message-list-item';
+      const mk = messageKey(m);
+      if (mk) {
+        li.dataset.messageId = mk;
+      }
       const who = m.senderId ?? '?';
       const text = typeof m.content === 'string' ? m.content : '';
       const at = formatTime(m.createdAt);
