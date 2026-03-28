@@ -1,3 +1,4 @@
+import { getRoute } from '../app/router.js';
 import {
   getActiveRecipientId,
   getMessagesState,
@@ -7,6 +8,7 @@ import {
   loadMessages,
   sendActiveMessage,
   setActiveChatId,
+  subscribeChatMessages,
 } from '../features/chat/state.js';
 
 function labelForChat(chat) {
@@ -50,7 +52,11 @@ function formatTime(ts) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+let lastMessageUnsub = null;
+
 export async function renderChatPage(container) {
+  lastMessageUnsub?.();
+  lastMessageUnsub = null;
   await loadChats();
 
   const root = document.createElement('div');
@@ -76,7 +82,8 @@ export async function renderChatPage(container) {
   sendHint.className = 'chat-composer-hint';
   composer.append(input, sendBtn);
 
-  async function renderMessagesArea() {
+  async function renderMessagesArea(options = {}) {
+    const skipFetch = options.skipFetch === true;
     const chatId = chatState.activeChatId;
     mainHint.textContent = chatId ? `Chat: ${chatId}` : 'Pick a chat from the list.';
     messageWrap.replaceChildren();
@@ -93,11 +100,13 @@ export async function renderChatPage(container) {
     input.disabled = !canSend;
     sendBtn.disabled = !canSend;
     sendHint.textContent = canSend ? '' : 'Sending is only available for direct chats.';
-    const loading = document.createElement('p');
-    loading.className = 'chat-empty';
-    loading.textContent = 'Loading messages…';
-    messageWrap.append(loading);
-    await loadMessages(chatId);
+    if (!skipFetch) {
+      const loading = document.createElement('p');
+      loading.className = 'chat-empty';
+      loading.textContent = 'Loading messages…';
+      messageWrap.append(loading);
+      await loadMessages(chatId);
+    }
     messageWrap.replaceChildren();
     const msgState = getMessagesState(chatId);
     if (msgState.status === 'error') {
@@ -201,6 +210,19 @@ export async function renderChatPage(container) {
 
   main.append(mainHint, messageWrap, composer, sendHint);
   await renderMessagesArea();
+
+  const onRemoteMessages = () => {
+    void renderMessagesArea({ skipFetch: true });
+  };
+  lastMessageUnsub = subscribeChatMessages(onRemoteMessages);
+  const onHashLeave = () => {
+    if (getRoute() !== '/chat') {
+      lastMessageUnsub?.();
+      lastMessageUnsub = null;
+      window.removeEventListener('hashchange', onHashLeave);
+    }
+  };
+  window.addEventListener('hashchange', onHashLeave);
 
   root.append(sidebar, main);
   container.append(root);

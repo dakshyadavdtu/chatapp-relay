@@ -13,6 +13,58 @@ export const chatState = {
   sendError: null,
 };
 
+const messageListeners = new Set();
+
+export function subscribeChatMessages(fn) {
+  messageListeners.add(fn);
+  return () => messageListeners.delete(fn);
+}
+
+function notifyChatMessages() {
+  for (const fn of messageListeners) {
+    try {
+      fn();
+    } catch {}
+  }
+}
+
+export function applyIncomingMessageCreated(raw) {
+  const chatId = raw?.chatId;
+  const id = raw?.id ?? raw?.messageId;
+  if (!chatId || id == null || id === '') {
+    return;
+  }
+  const prev = chatState.messagesByChat[chatId] ?? {
+    items: [],
+    meta: null,
+    status: 'idle',
+    error: null,
+  };
+  const items = Array.isArray(prev.items) ? prev.items : [];
+  if (items.some((m) => String(m.id) === String(id))) {
+    return;
+  }
+  const row = {
+    id,
+    chatId,
+    senderId: raw.senderId ?? null,
+    content: typeof raw.content === 'string' ? raw.content : '',
+    createdAt: raw.createdAt ?? null,
+  };
+  const nextItems = [...items, row].sort(
+    (a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0),
+  );
+  chatState.messagesByChat[chatId] = {
+    ...prev,
+    items: nextItems,
+    status: prev.status === 'error' ? prev.status : 'ok',
+    error: prev.error,
+  };
+  if (chatId === chatState.activeChatId) {
+    notifyChatMessages();
+  }
+}
+
 export function setActiveChatId(chatId) {
   chatState.activeChatId = chatId;
   chatState.sendStatus = 'idle';
