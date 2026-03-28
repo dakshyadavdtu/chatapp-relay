@@ -91,7 +91,9 @@ export async function renderChatPage(container) {
     if (!chatId) {
       return;
     }
-    await loadActiveChat(chatId);
+    if (!skipFetch) {
+      await loadActiveChat(chatId);
+    }
     if (chatState.activeChatStatus === 'ok' && chatState.activeChat) {
       const label = labelForChat(chatState.activeChat);
       mainHint.textContent = `Chat: ${label}`;
@@ -216,7 +218,10 @@ export async function renderChatPage(container) {
   main.append(mainHint, messageWrap, composer, sendHint);
   await renderMessagesArea();
 
-  const onRemoteMessages = () => {
+  const onRemoteMessages = (updatedChatId) => {
+    if (updatedChatId !== chatState.activeChatId) {
+      return;
+    }
     void renderMessagesArea({ skipFetch: true });
   };
   lastMessageUnsub = subscribeChatMessages(onRemoteMessages);

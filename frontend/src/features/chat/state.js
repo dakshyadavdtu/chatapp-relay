@@ -26,10 +26,10 @@ export function subscribeChatMessages(fn) {
   return () => messageListeners.delete(fn);
 }
 
-function notifyChatMessages() {
+function notifyChatMessages(chatId) {
   for (const fn of messageListeners) {
     try {
-      fn();
+      fn(chatId);
     } catch {}
   }
 }
@@ -61,11 +61,16 @@ export function applyIncomingMessageCreated(raw) {
     error: prev.error,
   };
   if (chatId === chatState.activeChatId) {
-    notifyChatMessages();
+    notifyChatMessages(chatId);
   }
 }
 
 export function setActiveChatId(chatId) {
+  if (chatState.activeChatId !== chatId) {
+    chatState.activeChat = null;
+    chatState.activeChatStatus = 'idle';
+    chatState.activeChatError = null;
+  }
   chatState.activeChatId = chatId;
   chatState.sendStatus = 'idle';
   chatState.sendError = null;
@@ -108,7 +113,7 @@ export async function loadChats() {
       chatState.activeChatError = null;
     }
     if (!chatState.activeChatId && chatState.chats.length > 0) {
-      chatState.activeChatId = chatState.chats[0].chatId;
+      setActiveChatId(chatState.chats[0].chatId);
     }
   } catch (e) {
     chatState.chats = [];
