@@ -1,4 +1,4 @@
-import { routeClientEvent } from './events.js';
+import { routeIncomingJson } from './incoming.js';
 
 function rawToUtf8(rawData) {
   if (Buffer.isBuffer(rawData)) {
@@ -30,5 +30,5 @@ export function dispatchIncomingMessage(ws, rawData, ctx) {
   if (!parsed || typeof parsed !== 'object') {
     return;
   }
-  routeClientEvent(ws, parsed, ctx);
+  routeIncomingJson(ws, parsed, ctx);
 }

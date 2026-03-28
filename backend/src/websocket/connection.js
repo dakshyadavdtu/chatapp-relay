@@ -10,6 +10,8 @@ export function handleConnection(ws, req, hooks = {}) {
   const ctx = {
     id: randomUUID(),
     remoteAddress: req.socket?.remoteAddress ?? null,
+    path: typeof req.url === 'string' ? req.url : null,
+    connectedAt: Date.now(),
     ws,
     send(payload) {
       sendJson(ws, payload);

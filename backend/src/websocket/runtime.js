@@ -1,5 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { handleConnection } from './connection.js';
+import { broadcastToAll, buildMessageCreatedPayload } from './outbound.js';
 
 export function createWebSocketRuntime() {
   const wss = new WebSocketServer({ noServer: true });
@@ -23,23 +24,7 @@ export function createWebSocketRuntime() {
       });
     },
     handleMessageCreated(evt) {
-      const mid = evt?.messageId ?? null;
-      const payload = {
-        type: 'message.created',
-        v: 1,
-        message: {
-          id: mid,
-          messageId: mid,
-          chatId: evt?.chatId ?? null,
-          senderId: evt?.senderId ?? null,
-          recipientId: evt?.recipientId ?? null,
-          content: evt?.content ?? '',
-          createdAt: evt?.createdAt ?? null,
-        },
-      };
-      for (const c of connections.values()) {
-        c.send(payload);
-      }
+      broadcastToAll(connections, buildMessageCreatedPayload(evt));
     },
   };
 }
