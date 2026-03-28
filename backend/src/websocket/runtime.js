@@ -23,10 +23,13 @@ export function createWebSocketRuntime() {
       });
     },
     handleMessageCreated(evt) {
+      const mid = evt?.messageId ?? null;
       const payload = {
         type: 'message.created',
+        v: 1,
         message: {
-          messageId: evt?.messageId ?? null,
+          id: mid,
+          messageId: mid,
           chatId: evt?.chatId ?? null,
           senderId: evt?.senderId ?? null,
           recipientId: evt?.recipientId ?? null,

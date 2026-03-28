@@ -79,6 +79,9 @@ test('send message emits websocket message.created event', async () => {
 
   const evt = await waitEvent;
   assert.equal(evt.type, 'message.created');
+  assert.equal(evt.v, 1);
+  assert.ok(typeof evt.message?.id === 'string' && evt.message.id.length > 0);
+  assert.equal(evt.message?.messageId, evt.message?.id);
   assert.equal(evt.message?.chatId, 'direct:u1:u2');
   assert.equal(evt.message?.recipientId, 'u2');
   assert.equal(evt.message?.senderId, 'u1');
