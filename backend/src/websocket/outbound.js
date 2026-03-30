@@ -15,10 +15,3 @@ export function buildMessageCreatedPayload(evt) {
   };
 }
 
-export function broadcastToAll(connections, payload) {
-  for (const ctx of connections.values()) {
-    if (ctx && typeof ctx.send === 'function') {
-      ctx.send(payload);
-    }
-  }
-}

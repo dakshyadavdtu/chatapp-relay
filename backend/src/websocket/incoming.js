@@ -1,25 +1,20 @@
 import { onPresenceMessage } from './presence.js';
 
+const handlers = {
+  ping(_ws, _parsed, ctx) {
+    ctx.send({ type: 'pong', ts: Date.now() });
+  },
+  presence(ws, parsed, ctx) {
+    onPresenceMessage(ws, parsed, ctx);
+  },
+};
+
 export function routeIncomingJson(ws, parsed, ctx) {
   const t = typeof parsed?.type === 'string' ? parsed.type : '';
-  if (t === 'ping') {
-    ws.send(JSON.stringify({ type: 'pong', ts: Date.now() }));
-    return;
+  const handler = handlers[t];
+  if (handler) {
+    handler(ws, parsed, ctx);
   }
-  if (t === 'presence') {
-    onPresenceMessage(ws, parsed, ctx);
-    return;
-  }
-  if (t === 'chat') {
-    handleChatIncoming(ws, parsed, ctx);
-    return;
-  }
-  if (t === 'message') {
-    handleMessageIncoming(ws, parsed, ctx);
-    return;
-  }
+  // unknown types are silently ignored for now
 }
 
-function handleChatIncoming(_ws, _parsed, _ctx) {}
-
-function handleMessageIncoming(_ws, _parsed, _ctx) {}

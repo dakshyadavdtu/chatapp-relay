@@ -1,9 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { dispatchIncomingMessage } from './messages.js';
 import { onConnectionClose, onConnectionOpen } from './presence.js';
+import { registerUserConnection, removeUserConnection } from './connections.js';
 
 function sendJson(ws, payload) {
-  ws.send(JSON.stringify(payload));
+  if (ws.readyState === 1) {
+    ws.send(JSON.stringify(payload));
+  }
 }
 
 export function handleConnection(ws, req, hooks = {}) {
@@ -12,6 +15,8 @@ export function handleConnection(ws, req, hooks = {}) {
     remoteAddress: req.socket?.remoteAddress ?? null,
     path: typeof req.url === 'string' ? req.url : null,
     connectedAt: Date.now(),
+    // userId is set by the runtime after session is resolved
+    userId: null,
     ws,
     send(payload) {
       sendJson(ws, payload);
@@ -27,6 +32,9 @@ export function handleConnection(ws, req, hooks = {}) {
       return;
     }
     closed = true;
+    if (ctx.userId) {
+      removeUserConnection(ctx.userId, ctx);
+    }
     if (typeof hooks.onClose === 'function') {
       hooks.onClose(ctx);
     }
