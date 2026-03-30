@@ -15,7 +15,6 @@ export function handleConnection(ws, req, hooks = {}) {
     remoteAddress: req.socket?.remoteAddress ?? null,
     path: typeof req.url === 'string' ? req.url : null,
     connectedAt: Date.now(),
-    // userId is set by the runtime after session is resolved
     userId: null,
     ws,
     send(payload) {

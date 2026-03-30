@@ -9,9 +9,7 @@ const handlers = {
       applyIncomingMessage(msg.message);
     }
   },
-  pong(msg) {
-    // keeping connection alive quietly
-  },
+  pong(_msg) {},
 };
 
 export function getChatSocketStatus() {

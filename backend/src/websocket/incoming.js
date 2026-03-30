@@ -15,6 +15,5 @@ export function routeIncomingJson(ws, parsed, ctx) {
   if (handler) {
     handler(ws, parsed, ctx);
   }
-  // unknown types are silently ignored for now
 }
 

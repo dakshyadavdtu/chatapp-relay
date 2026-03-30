@@ -1,5 +1,4 @@
-// tracks which connection contexts belong to which userId
-const byUser = new Map(); // userId -> Set of ctx
+const byUser = new Map();
 
 export function registerUserConnection(userId, ctx) {
   if (!userId || !ctx) return;
