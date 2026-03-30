@@ -68,9 +68,7 @@ export function applyIncomingMessage(raw) {
     status: prev.status === 'error' ? prev.status : 'ok',
     error: prev.error,
   };
-  if (chatId === chatState.activeChatId) {
-    notifyChatMessages(chatId);
-  }
+  notifyChatMessages(chatId);
 }
 
 export function setActiveChatId(chatId) {
@@ -224,8 +222,11 @@ export async function sendActiveMessage(content) {
     const res = await sendMessage(recipientId, content);
     chatState.sendStatus = 'ok';
     chatState.sendError = null;
-    await loadMessages(chatId);
-    return { ok: true, data: res?.data?.message ?? null };
+    const msg = res?.data?.message;
+    if (msg && msg.chatId) {
+      applyIncomingMessage(msg);
+    }
+    return { ok: true, data: msg ?? null };
   } catch (e) {
     chatState.sendStatus = 'error';
     chatState.sendError = e?.code ?? 'SEND_FAILED';

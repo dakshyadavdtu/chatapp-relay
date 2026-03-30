@@ -212,7 +212,6 @@ export async function renderChatPage(container) {
     input.value = '';
     sendHint.textContent = '';
     sendBtn.disabled = !getActiveRecipientId();
-    await renderMessagesArea();
   });
 
   main.append(mainHint, messageWrap, composer, sendHint);
