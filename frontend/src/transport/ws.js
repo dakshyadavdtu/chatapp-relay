@@ -1,4 +1,5 @@
 import { wsUrl } from '../config/ws.js';
+import { setConnectionStatus } from './connectionState.js';
 
 export function getWebSocketUrl() {
   return wsUrl();
@@ -49,6 +50,7 @@ export function startJsonSocket({ onJson, onStatus }) {
       return;
     }
     emitStatus('connecting');
+    setConnectionStatus(reconnectAttempt > 0 ? 'reconnecting' : 'connecting', { reconnectAttempt });
     let socket;
     try {
       socket = new WebSocket(getWebSocketUrl());
@@ -75,6 +77,7 @@ export function startJsonSocket({ onJson, onStatus }) {
     socket.addEventListener('open', () => {
       reconnectAttempt = 0;
       emitStatus('open');
+      setConnectionStatus('connected', { reconnectAttempt: 0 });
     });
     socket.addEventListener('close', () => {
       socket.removeEventListener('message', onMessage);
@@ -82,6 +85,7 @@ export function startJsonSocket({ onJson, onStatus }) {
         ws = null;
       }
       emitStatus('closed');
+      setConnectionStatus('disconnected');
       if (!stopped) {
         scheduleReconnect();
       }
@@ -101,6 +105,12 @@ export function startJsonSocket({ onJson, onStatus }) {
         ws = null;
       }
       emitStatus('closed');
+      setConnectionStatus('disconnected');
+    },
+    send(payload) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+      }
     },
     getStatus() {
       return lastStatus;
