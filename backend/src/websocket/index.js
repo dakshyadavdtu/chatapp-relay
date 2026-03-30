@@ -1,9 +1,9 @@
-import { subscribeMessageCreated } from '../realtime/messageCreated.js';
+import { onMessageCreated } from '../realtime/bus.js';
 import { createWebSocketRuntime } from './runtime.js';
 
 export function attachWebSocket(httpServer) {
   const runtime = createWebSocketRuntime();
-  subscribeMessageCreated((evt) => {
+  onMessageCreated((evt) => {
     runtime.handleMessageCreated(evt);
   });
 

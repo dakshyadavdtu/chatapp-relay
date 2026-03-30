@@ -9,7 +9,7 @@ import {
   toDirectChatId,
   toRoomChatId,
 } from '../src/chat/index.js';
-import { subscribeMessageCreated } from '../src/realtime/messageCreated.js';
+import { onMessageCreated } from '../src/realtime/bus.js';
 import { createStorage } from '../src/storage/index.js';
 
 test('toDirectChatId is stable sorted', () => {
@@ -101,15 +101,14 @@ test('sendMessageBody triggers message created hook', async () => {
   const storage = createStorage();
   const chat = createChatService(storage);
   let seen = null;
-  subscribeMessageCreated((evt) => {
+  onMessageCreated((evt) => {
     seen = evt;
   });
 
   await chat.sendMessageBody('u1', { recipientId: 'u2', content: 'hello hook' });
 
-  assert.equal(seen?.type, 'message.created');
   assert.equal(seen?.chatId, 'direct:u1:u2');
-  subscribeMessageCreated(() => {});
+  onMessageCreated(() => {});
 });
 
 test('sendMessageBody rejects long content', async () => {

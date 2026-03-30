@@ -11,8 +11,8 @@ test('buildMessageCreatedPayload matches wire shape', () => {
     content: 'hello',
     createdAt: 42,
   });
-  assert.equal(p.type, 'message.created');
-  assert.equal(p.v, 1);
+  assert.equal(p.type, 'MESSAGE_RECEIVE');
+  assert.equal(p.messageId, 'msg_x');
   assert.equal(p.message.id, 'msg_x');
   assert.equal(p.message.messageId, 'msg_x');
   assert.equal(p.message.chatId, 'direct:a:b');
@@ -20,4 +20,5 @@ test('buildMessageCreatedPayload matches wire shape', () => {
   assert.equal(p.message.recipientId, 'b');
   assert.equal(p.message.content, 'hello');
   assert.equal(p.message.createdAt, 42);
+  assert.equal(p.message.state, 'SENT');
 });

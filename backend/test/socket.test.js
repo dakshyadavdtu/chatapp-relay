@@ -63,7 +63,7 @@ test('send message emits websocket message.created event', async () => {
     const t = setTimeout(() => reject(new Error('event timeout')), 3000);
     ws.on('message', (data) => {
       const msg = JSON.parse(data.toString());
-      if (msg?.type === 'message.created') {
+      if (msg?.type === 'MESSAGE_RECEIVE') {
         clearTimeout(t);
         resolve(msg);
       }
@@ -78,8 +78,8 @@ test('send message emits websocket message.created event', async () => {
   assert.equal(sendRes.status, 201);
 
   const evt = await waitEvent;
-  assert.equal(evt.type, 'message.created');
-  assert.equal(evt.v, 1);
+  assert.equal(evt.type, 'MESSAGE_RECEIVE');
+  assert.equal(evt.state, 'SENT');
   assert.ok(typeof evt.message?.id === 'string' && evt.message.id.length > 0);
   assert.equal(evt.message?.messageId, evt.message?.id);
   assert.equal(evt.message?.chatId, 'direct:u1:u2');

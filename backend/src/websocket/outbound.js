@@ -1,8 +1,14 @@
 export function buildMessageCreatedPayload(evt) {
   const mid = evt?.messageId ?? null;
   return {
-    type: 'message.created',
-    v: 1,
+    type: 'MESSAGE_RECEIVE',
+    messageId: mid,
+    chatId: evt?.chatId ?? null,
+    senderId: evt?.senderId ?? null,
+    recipientId: evt?.recipientId ?? null,
+    content: evt?.content ?? '',
+    timestamp: evt?.createdAt ?? Date.now(),
+    state: 'SENT',
     message: {
       id: mid,
       messageId: mid,
@@ -10,8 +16,10 @@ export function buildMessageCreatedPayload(evt) {
       senderId: evt?.senderId ?? null,
       recipientId: evt?.recipientId ?? null,
       content: evt?.content ?? '',
-      createdAt: evt?.createdAt ?? null,
+      createdAt: evt?.createdAt ?? Date.now(),
+      state: 'SENT',
     },
   };
 }
+
 

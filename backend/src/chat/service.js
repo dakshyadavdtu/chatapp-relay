@@ -1,5 +1,5 @@
 import { getStorage } from '../storage/index.js';
-import { publishMessageCreated } from '../realtime/messageCreated.js';
+import { emitMessageCreated } from '../realtime/bus.js';
 import { toDirectChatId } from './chatId.js';
 import { chatListPayload, chatRowPayload } from './listPayload.js';
 import { messageListPayload, parseMessageListQuery } from './messageListPayload.js';
@@ -64,8 +64,7 @@ export function createChatService(storage) {
         senderId,
         body: content,
       });
-      publishMessageCreated({
-        type: 'message.created',
+      emitMessageCreated({
         messageId: created.id,
         chatId: created.chatId,
         senderId: created.senderId,
