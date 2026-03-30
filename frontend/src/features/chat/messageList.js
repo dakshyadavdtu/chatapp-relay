@@ -12,16 +12,19 @@ export function normalizeChatMessage(raw, chatId) {
     return null;
   }
   const cid = raw.chatId ?? chatId ?? null;
-  let createdAt = raw.createdAt;
+  let createdAt = raw.createdAt ?? raw.timestamp;
   if (typeof createdAt !== 'number' || Number.isNaN(createdAt)) {
     createdAt = null;
   }
   return {
     id,
+    messageId: raw.messageId ?? id,
     chatId: cid,
     senderId: raw.senderId ?? null,
+    recipientId: raw.recipientId ?? null,
     content: typeof raw.content === 'string' ? raw.content : '',
     createdAt,
+    state: raw.state ?? null,
   };
 }
 
