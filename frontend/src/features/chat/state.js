@@ -34,7 +34,7 @@ function notifyChatMessages(chatId) {
   }
 }
 
-export function applyIncomingMessageCreated(raw) {
+export function applyIncomingMessage(raw) {
   const chatId = raw?.chatId;
   if (!chatId) {
     return;
@@ -50,13 +50,21 @@ export function applyIncomingMessageCreated(raw) {
     error: null,
   };
   const items = Array.isArray(prev.items) ? prev.items : [];
-  if (items.some((m) => messageKey(m) === row.id)) {
-    return;
+  const kid = messageKey(row);
+  const existIdx = items.findIndex((m) => messageKey(m) === kid);
+  
+  let nextItems;
+  if (existIdx >= 0) {
+    const merged = { ...items[existIdx], ...row };
+    nextItems = [...items];
+    nextItems[existIdx] = merged;
+  } else {
+    nextItems = [...items, row];
   }
-  const nextItems = sortMessagesOldestFirst([...items, row]);
+  
   chatState.messagesByChat[chatId] = {
     ...prev,
-    items: nextItems,
+    items: sortMessagesOldestFirst(nextItems),
     status: prev.status === 'error' ? prev.status : 'ok',
     error: prev.error,
   };

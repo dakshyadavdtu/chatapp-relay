@@ -2,7 +2,7 @@ export function messageKey(m) {
   if (!m || typeof m !== 'object') {
     return '';
   }
-  const k = m.id ?? m.messageId;
+  const k = m.id ?? m.messageId ?? m.clientId ?? m.clientMessageId;
   return k != null && k !== '' ? String(k) : '';
 }
 
