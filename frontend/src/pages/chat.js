@@ -93,6 +93,7 @@ export async function renderChatPage(container) {
     }
     if (!skipFetch) {
       await loadActiveChat(chatId);
+      if (chatId !== chatState.activeChatId) return;
     }
     if (chatState.activeChatStatus === 'ok' && chatState.activeChat) {
       const label = labelForChat(chatState.activeChat);
@@ -111,6 +112,9 @@ export async function renderChatPage(container) {
       await loadMessages(chatId);
     }
     messageWrap.replaceChildren();
+    if (chatId !== chatState.activeChatId) {
+      return;
+    }
     const msgState = getMessagesState(chatId);
     if (msgState.status === 'error') {
       const p = document.createElement('p');
