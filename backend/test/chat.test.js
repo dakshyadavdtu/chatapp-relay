@@ -145,3 +145,15 @@ test('messageListBody denies user outside chat members', async () => {
   assert.equal(out.ok, false);
   assert.equal(out.code, 'CHAT_ACCESS_DENIED');
 });
+
+test('sendMessageBody echoes clientId', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const out = await chat.sendMessageBody('u1', {
+    recipientId: 'u2',
+    content: 'hello',
+    clientId: 'temp_123',
+  });
+  assert.equal(out.ok, true);
+  assert.equal(out.data.message.clientId, 'temp_123');
+});
