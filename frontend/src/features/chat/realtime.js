@@ -1,7 +1,10 @@
-import { applyIncomingMessage } from './state.js';
+import { applyIncomingMessage, chatState, loadActiveChat, loadMessages, loadChats } from './state.js';
 import { startJsonSocket } from '../../transport/ws.js';
+import { subscribeConnection } from '../../transport/connectionState.js';
 
 let session = null;
+let unsubConn = null;
+let lastStatus = 'disconnected';
 
 const handlers = {
   MESSAGE_RECEIVE(msg) {
@@ -18,6 +21,18 @@ export function getChatSocketStatus() {
 
 export function startChatRealtime() {
   stopChatRealtime();
+  
+  unsubConn = subscribeConnection((st) => {
+    if (st.status === 'connected' && lastStatus !== 'connected') {
+      void loadChats();
+      if (chatState.activeChatId) {
+        void loadActiveChat(chatState.activeChatId);
+        void loadMessages(chatState.activeChatId);
+      }
+    }
+    lastStatus = st.status;
+  });
+
   session = startJsonSocket({
     onJson(msg) {
       if (!msg?.type) return;
@@ -30,6 +45,10 @@ export function startChatRealtime() {
 }
 
 export function stopChatRealtime() {
+  if (unsubConn) {
+    unsubConn();
+    unsubConn = null;
+  }
   if (session) {
     session.stop();
     session = null;
