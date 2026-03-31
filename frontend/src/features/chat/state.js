@@ -56,7 +56,6 @@ export function applyIncomingMessage(raw) {
   let nextItems;
   if (existIdx >= 0) {
     const merged = { ...items[existIdx], ...row };
-    // Preserve existing clientId if the new row doesn't have it (server ack)
     if (items[existIdx].clientId && !row.clientId) {
       merged.clientId = items[existIdx].clientId;
     }
