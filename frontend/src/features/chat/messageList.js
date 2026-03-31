@@ -36,26 +36,36 @@ export function sortMessagesOldestFirst(items) {
     if (ta !== tb) {
       return ta - tb;
     }
-    return String(a.id).localeCompare(String(b.id));
+    return messageKey(a).localeCompare(messageKey(b));
   });
 }
 
-export function normalizeMessageListForChat(rawList, chatId) {
+export function normalizeMessageListForChat(rawList, chatId, existingItems = []) {
   if (!Array.isArray(rawList)) {
-    return [];
+    return existingItems;
   }
-  const seen = new Set();
-  const out = [];
+  let out = [...existingItems];
   for (const raw of rawList) {
-    const n = normalizeChatMessage(raw, chatId);
-    if (!n) {
+    const row = normalizeChatMessage(raw, chatId);
+    if (!row) {
       continue;
     }
-    if (seen.has(n.id)) {
-      continue;
+    const existIdx = out.findIndex((m) => {
+      if (m.id && row.id && String(m.id) === String(row.id)) return true;
+      if (m.messageId && row.messageId && String(m.messageId) === String(row.messageId)) return true;
+      if (m.clientId && row.clientId && String(m.clientId) === String(row.clientId)) return true;
+      return messageKey(m) === messageKey(row);
+    });
+
+    if (existIdx >= 0) {
+      const merged = { ...out[existIdx], ...row };
+      if (out[existIdx].clientId && !row.clientId) {
+        merged.clientId = out[existIdx].clientId;
+      }
+      out[existIdx] = merged;
+    } else {
+      out.push(row);
     }
-    seen.add(n.id);
-    out.push(n);
   }
   return sortMessagesOldestFirst(out);
 }

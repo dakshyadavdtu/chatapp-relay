@@ -158,7 +158,7 @@ export async function loadMessages(chatId) {
       return;
     }
     chatState.messagesByChat[chatId] = {
-      items: normalizeMessageListForChat(r.data.messages, chatId),
+      items: normalizeMessageListForChat(r.data.messages, chatId, chatState.messagesByChat[chatId].items),
       meta: r.data.meta ?? null,
       status: 'ok',
       error: null,
