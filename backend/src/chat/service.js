@@ -29,6 +29,7 @@ export function createChatService(storage) {
     async sendMessageBody(userId, payload) {
       const recipientId = typeof payload?.recipientId === 'string' ? payload.recipientId.trim() : '';
       const content = typeof payload?.content === 'string' ? payload.content.trim() : '';
+      const clientId = typeof payload?.clientId === 'string' ? payload.clientId.trim() : null;
       if (!recipientId) {
         return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'recipientId required' };
       }
@@ -71,6 +72,7 @@ export function createChatService(storage) {
         recipientId,
         content: created.body,
         createdAt: created.createdAt,
+        clientId,
       });
       return {
         ok: true,
@@ -84,6 +86,7 @@ export function createChatService(storage) {
             recipientId,
             content: created.body,
             createdAt: created.createdAt,
+            clientId,
           },
         },
       };

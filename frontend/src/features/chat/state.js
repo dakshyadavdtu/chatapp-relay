@@ -226,8 +226,18 @@ export async function sendActiveMessage(content) {
   }
   chatState.sendStatus = 'sending';
   chatState.sendError = null;
+  
+  const clientId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  applyIncomingMessage({
+    clientId,
+    chatId,
+    content,
+    createdAt: Date.now(),
+    state: 'PENDING',
+  });
+
   try {
-    const res = await sendMessage(recipientId, content);
+    const res = await sendMessage(recipientId, content, clientId);
     chatState.sendStatus = 'ok';
     chatState.sendError = null;
     const msg = res?.data?.message;
@@ -238,6 +248,12 @@ export async function sendActiveMessage(content) {
   } catch (e) {
     chatState.sendStatus = 'error';
     chatState.sendError = e?.code ?? 'SEND_FAILED';
+    applyIncomingMessage({
+      clientId,
+      chatId,
+      content,
+      state: 'ERROR',
+    });
     return { ok: false, code: chatState.sendError };
   }
 }

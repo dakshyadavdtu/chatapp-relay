@@ -21,6 +21,6 @@ export async function getChat(chatId) {
   return getJson(path);
 }
 
-export async function sendMessage(recipientId, content) {
-  return postJson('/api/chat/send', { recipientId, content });
+export async function sendMessage(recipientId, content, clientId) {
+  return postJson('/api/chat/send', { recipientId, content, clientId });
 }
