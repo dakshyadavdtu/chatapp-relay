@@ -40,6 +40,15 @@ export function sortMessagesOldestFirst(items) {
   });
 }
 
+export function findMessageIndex(items, row) {
+  return items.findIndex((m) => {
+    if (m.id && row.id && String(m.id) === String(row.id)) return true;
+    if (m.messageId && row.messageId && String(m.messageId) === String(row.messageId)) return true;
+    if (m.clientId && row.clientId && String(m.clientId) === String(row.clientId)) return true;
+    return messageKey(m) === messageKey(row);
+  });
+}
+
 export function normalizeMessageListForChat(rawList, chatId, existingItems = []) {
   if (!Array.isArray(rawList)) {
     return existingItems;
@@ -50,12 +59,7 @@ export function normalizeMessageListForChat(rawList, chatId, existingItems = [])
     if (!row) {
       continue;
     }
-    const existIdx = out.findIndex((m) => {
-      if (m.id && row.id && String(m.id) === String(row.id)) return true;
-      if (m.messageId && row.messageId && String(m.messageId) === String(row.messageId)) return true;
-      if (m.clientId && row.clientId && String(m.clientId) === String(row.clientId)) return true;
-      return messageKey(m) === messageKey(row);
-    });
+    const existIdx = findMessageIndex(out, row);
 
     if (existIdx >= 0) {
       const merged = { ...out[existIdx], ...row };

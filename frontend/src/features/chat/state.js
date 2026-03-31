@@ -4,6 +4,7 @@ import {
   normalizeChatMessage,
   normalizeMessageListForChat,
   sortMessagesOldestFirst,
+  findMessageIndex,
 } from './messageList.js';
 
 export const chatState = {
@@ -50,12 +51,7 @@ export function applyIncomingMessage(raw) {
     error: null,
   };
   const items = Array.isArray(prev.items) ? prev.items : [];
-  const existIdx = items.findIndex((m) => {
-    if (m.id && row.id && String(m.id) === String(row.id)) return true;
-    if (m.messageId && row.messageId && String(m.messageId) === String(row.messageId)) return true;
-    if (m.clientId && row.clientId && String(m.clientId) === String(row.clientId)) return true;
-    return messageKey(m) === messageKey(row);
-  });
+  const existIdx = findMessageIndex(items, row);
   
   let nextItems;
   if (existIdx >= 0) {
