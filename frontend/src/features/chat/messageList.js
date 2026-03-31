@@ -19,6 +19,7 @@ export function normalizeChatMessage(raw, chatId) {
   return {
     id,
     messageId: raw.messageId ?? id,
+    clientId: raw.clientId ?? raw.clientMessageId ?? null,
     chatId: cid,
     senderId: raw.senderId ?? null,
     recipientId: raw.recipientId ?? null,

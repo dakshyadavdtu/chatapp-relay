@@ -50,12 +50,20 @@ export function applyIncomingMessage(raw) {
     error: null,
   };
   const items = Array.isArray(prev.items) ? prev.items : [];
-  const kid = messageKey(row);
-  const existIdx = items.findIndex((m) => messageKey(m) === kid);
+  const existIdx = items.findIndex((m) => {
+    if (m.id && row.id && String(m.id) === String(row.id)) return true;
+    if (m.messageId && row.messageId && String(m.messageId) === String(row.messageId)) return true;
+    if (m.clientId && row.clientId && String(m.clientId) === String(row.clientId)) return true;
+    return messageKey(m) === messageKey(row);
+  });
   
   let nextItems;
   if (existIdx >= 0) {
     const merged = { ...items[existIdx], ...row };
+    // Preserve existing clientId if the new row doesn't have it (server ack)
+    if (items[existIdx].clientId && !row.clientId) {
+      merged.clientId = items[existIdx].clientId;
+    }
     nextItems = [...items];
     nextItems[existIdx] = merged;
   } else {
