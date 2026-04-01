@@ -1,4 +1,4 @@
-import { applyIncomingMessage, chatState, loadActiveChat, loadMessages, loadChats } from './state.js';
+import { applyIncomingMessage, chatState, loadChats, refreshActiveChat } from './state.js';
 import { startJsonSocket } from '../../transport/ws.js';
 import { subscribeConnection } from '../../transport/connectionState.js';
 
@@ -25,10 +25,7 @@ export function startChatRealtime() {
   unsubConn = subscribeConnection((st) => {
     if (st.status === 'connected' && lastStatus !== 'connected') {
       void loadChats();
-      if (chatState.activeChatId) {
-        void loadActiveChat(chatState.activeChatId);
-        void loadMessages(chatState.activeChatId);
-      }
+      void refreshActiveChat();
     }
     lastStatus = st.status;
   });

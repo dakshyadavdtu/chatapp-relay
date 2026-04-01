@@ -208,6 +208,16 @@ export function getMessagesState(chatId) {
   );
 }
 
+export async function refreshActiveChat() {
+  const chatId = chatState.activeChatId;
+  if (!chatId) return;
+  await Promise.all([
+    loadActiveChat(chatId),
+    loadMessages(chatId)
+  ]);
+  notifyChatMessages(chatId);
+}
+
 export async function sendActiveMessage(content) {
   const chatId = chatState.activeChatId;
   if (!chatId) {
