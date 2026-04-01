@@ -179,6 +179,9 @@ export async function loadActiveChat(chatId) {
   chatState.activeChatError = null;
   try {
     const r = await getChat(chatId);
+    if (chatId !== chatState.activeChatId) {
+      return; // Skip assignment if user switched chats while loading
+    }
     if (!r?.success || !r?.data?.chat) {
       chatState.activeChat = null;
       chatState.activeChatStatus = 'error';
@@ -188,6 +191,9 @@ export async function loadActiveChat(chatId) {
     chatState.activeChat = r.data.chat;
     chatState.activeChatStatus = 'ok';
   } catch (e) {
+    if (chatId !== chatState.activeChatId) {
+      return;
+    }
     chatState.activeChat = null;
     chatState.activeChatStatus = 'error';
     chatState.activeChatError = e?.code ?? 'fetch_failed';
