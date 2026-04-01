@@ -64,6 +64,7 @@ export function createChatService(storage) {
         chatId: chat.id,
         senderId,
         body: content,
+        clientId,
       });
       emitMessageCreated({
         messageId: created.id,

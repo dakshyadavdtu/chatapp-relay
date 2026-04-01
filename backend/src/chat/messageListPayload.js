@@ -20,14 +20,16 @@ export function messageListPayload(messages, { limit, beforeTs }) {
 }
 
 function toMessageWire(m) {
+  const createdAtRaw = m.createdAt ?? m.timestamp ?? null;
+  const createdAt = Number.isFinite(createdAtRaw) ? createdAtRaw : null;
   return {
     id: m.id,
     messageId: m.id,
     chatId: m.chatId,
     senderId: m.senderId,
     content: typeof m.body === 'string' ? m.body : '',
-    createdAt: m.createdAt ?? null,
+    createdAt,
     clientId: m.clientId ?? null,
-    state: 'SENT',
+    state: m.state ?? 'SENT',
   };
 }
