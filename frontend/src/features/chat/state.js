@@ -237,6 +237,7 @@ export async function sendActiveMessage(content) {
     chatState.sendError = null;
     const msg = res?.data?.message;
     if (msg && msg.chatId) {
+      msg.state = 'SENT';
       applyIncomingMessage(msg);
     }
     return { ok: true, data: msg ?? null };
