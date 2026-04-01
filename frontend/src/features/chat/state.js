@@ -253,7 +253,6 @@ export async function sendActiveMessage(content) {
     chatState.sendError = null;
     const msg = res?.data?.message;
     if (msg && msg.chatId) {
-      msg.state = 'SENT';
       applyIncomingMessage(msg);
     }
     return { ok: true, data: msg ?? null };
@@ -262,7 +261,7 @@ export async function sendActiveMessage(content) {
     const existIdx = findMessageIndex(existingItems, { clientId, chatId });
     if (existIdx >= 0) {
       const ext = existingItems[existIdx];
-      if (ext.id || ext.state === 'SENT' || ext.state === 'CONFIRMED') {
+      if (ext.id || ext.state === 'SENT') {
         // The message was acknowledged via socket although HTTP timed out/failed.
         chatState.sendStatus = 'ok';
         chatState.sendError = null;

@@ -87,6 +87,7 @@ export function createChatService(storage) {
             content: created.body,
             createdAt: created.createdAt,
             clientId,
+            state: 'SENT',
           },
         },
       };

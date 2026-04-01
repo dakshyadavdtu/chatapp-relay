@@ -28,6 +28,6 @@ function toMessageWire(m) {
     content: typeof m.body === 'string' ? m.body : '',
     createdAt: m.createdAt ?? null,
     clientId: m.clientId ?? null,
-    state: 'CONFIRMED',
+    state: 'SENT',
   };
 }
