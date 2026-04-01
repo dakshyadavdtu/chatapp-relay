@@ -34,6 +34,7 @@ npm test
 ```bash
 npm install
 npm run dev
+# optional: npm test (merge helpers)
 ```
 
 If you need custom ports or URLs, copy `.env.example` to `.env` in `backend/` or `frontend/` and edit there. Vite proxies `/api` in dev only; set `VITE_WS_URL` if the WebSocket host or port differs from the default.
