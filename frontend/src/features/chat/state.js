@@ -252,6 +252,17 @@ export async function sendActiveMessage(content) {
     }
     return { ok: true, data: msg ?? null };
   } catch (e) {
+    const existingItems = chatState.messagesByChat[chatId]?.items ?? [];
+    const existIdx = findMessageIndex(existingItems, { clientId, chatId });
+    if (existIdx >= 0) {
+      const ext = existingItems[existIdx];
+      if (ext.id || ext.state === 'SENT' || ext.state === 'CONFIRMED') {
+        // The message was acknowledged via socket although HTTP timed out/failed.
+        chatState.sendStatus = 'ok';
+        chatState.sendError = null;
+        return { ok: true, data: ext };
+      }
+    }
     chatState.sendStatus = 'error';
     chatState.sendError = e?.code ?? 'SEND_FAILED';
     applyIncomingMessage({
