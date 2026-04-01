@@ -27,6 +27,7 @@ function toMessageWire(m) {
     senderId: m.senderId,
     content: typeof m.body === 'string' ? m.body : '',
     createdAt: m.createdAt ?? null,
+    clientId: m.clientId ?? null,
     state: 'CONFIRMED',
   };
 }

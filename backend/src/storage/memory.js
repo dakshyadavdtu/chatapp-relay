@@ -89,6 +89,7 @@ export function createMemoryStorage() {
           senderId: record.senderId ?? 'u1',
           body: typeof record.body === 'string' ? record.body : '',
           createdAt: record.createdAt ?? now(),
+          clientId: record.clientId ?? null,
         };
         messagesById.set(message.id, message);
         const list = messagesByChatId.get(chatId) ?? [];
