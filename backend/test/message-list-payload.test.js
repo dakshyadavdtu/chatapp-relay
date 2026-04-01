@@ -22,3 +22,25 @@ test('messageListPayload maps id and messageId', () => {
   assert.equal(m.content, 'hello');
   assert.equal(m.chatId, 'direct:x:y');
 });
+
+test('messageListPayload preserves state, clientId, and timestamp fallback', () => {
+  const out = messageListPayload(
+    [
+      {
+        id: 'msg_b',
+        chatId: 'direct:x:y',
+        senderId: 'x',
+        body: 'hey',
+        timestamp: 200,
+        clientId: 'tmp_1',
+        state: 'DELIVERED',
+      },
+    ],
+    { limit: 10, beforeTs: null },
+  );
+  const m = out.messages[0];
+  assert.equal(m.createdAt, 200);
+  assert.equal(m.clientId, 'tmp_1');
+  assert.equal(m.state, 'DELIVERED');
+  assert.equal(out.meta.count, 1);
+});

@@ -157,3 +157,20 @@ test('sendMessageBody echoes clientId', async () => {
   assert.equal(out.ok, true);
   assert.equal(out.data.message.clientId, 'temp_123');
 });
+
+test('messageListBody returns clientId and state from sent message', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  await chat.sendMessageBody('u1', {
+    recipientId: 'u2',
+    content: 'hello history',
+    clientId: 'temp_history',
+  });
+
+  const res = await chat.messageListBody('u1', 'direct:u1:u2', new URLSearchParams(''));
+  assert.equal(res.ok, true);
+  assert.equal(Array.isArray(res.data.messages), true);
+  const last = res.data.messages[res.data.messages.length - 1];
+  assert.equal(last.clientId, 'temp_history');
+  assert.equal(last.state, 'SENT');
+});
