@@ -28,6 +28,7 @@ npm install
 npm run dev
 npm test
 ```
+Chat API basics: `GET /api/chats` lists chats, `GET /api/chats/:chatId/open` returns chat plus recent messages, and `POST /api/chats/:chatId/messages` sends a message for that chat (also available as `/api/chat/send`).
 
 **Frontend** — from `frontend/`:
 
