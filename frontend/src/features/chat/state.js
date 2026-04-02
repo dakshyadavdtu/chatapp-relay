@@ -1,4 +1,4 @@
-import { getChat, listChats, listMessages, sendMessage } from '../../api/chat.js';
+import { getChat, listChats, listMessages, openChat, sendMessage } from '../../api/chat.js';
 import {
   messageKey,
   normalizeChatMessage,
@@ -168,6 +168,67 @@ export async function loadMessages(chatId) {
   }
 }
 
+export async function openActiveChat(chatId) {
+  if (!chatId) {
+    chatState.activeChat = null;
+    chatState.activeChatStatus = 'idle';
+    chatState.activeChatError = null;
+    return;
+  }
+  chatState.activeChatId = chatId;
+  chatState.activeChatStatus = 'loading';
+  chatState.activeChatError = null;
+  chatState.messagesByChat[chatId] = {
+    items: chatState.messagesByChat[chatId]?.items ?? [],
+    meta: chatState.messagesByChat[chatId]?.meta ?? null,
+    status: 'loading',
+    error: null,
+  };
+  try {
+    const r = await openChat(chatId);
+    if (chatId !== chatState.activeChatId) {
+      return;
+    }
+    if (!r?.success || !r?.data?.chat) {
+      chatState.activeChat = null;
+      chatState.activeChatStatus = 'error';
+      chatState.activeChatError = 'bad_response';
+      chatState.messagesByChat[chatId] = {
+        items: [],
+        meta: null,
+        status: 'error',
+        error: 'bad_response',
+      };
+      return;
+    }
+    chatState.activeChat = r.data.chat;
+    chatState.activeChatStatus = 'ok';
+    const items = Array.isArray(r.data.messages)
+      ? normalizeMessageListForChat(r.data.messages, chatId, chatState.messagesByChat[chatId].items)
+      : [];
+    chatState.messagesByChat[chatId] = {
+      items,
+      meta: r.data.meta ?? null,
+      status: 'ok',
+      error: null,
+    };
+    notifyChatMessages(chatId);
+  } catch (e) {
+    if (chatId !== chatState.activeChatId) {
+      return;
+    }
+    chatState.activeChat = null;
+    chatState.activeChatStatus = 'error';
+    chatState.activeChatError = e?.code ?? 'fetch_failed';
+    chatState.messagesByChat[chatId] = {
+      items: [],
+      meta: null,
+      status: 'error',
+      error: e?.code ?? 'fetch_failed',
+    };
+  }
+}
+
 export async function loadActiveChat(chatId) {
   if (!chatId) {
     chatState.activeChat = null;
@@ -217,11 +278,7 @@ export function getMessagesState(chatId) {
 export async function refreshActiveChat() {
   const chatId = chatState.activeChatId;
   if (!chatId) return;
-  await Promise.all([
-    loadActiveChat(chatId),
-    loadMessages(chatId)
-  ]);
-  notifyChatMessages(chatId);
+  await openActiveChat(chatId);
 }
 
 export async function sendActiveMessage(content) {

@@ -3,10 +3,9 @@ import { messageKey } from '../features/chat/messageList.js';
 import {
   getActiveRecipientId,
   getMessagesState,
-  loadActiveChat,
   chatState,
   loadChats,
-  loadMessages,
+  openActiveChat,
   sendActiveMessage,
   setActiveChatId,
   subscribeChatMessages,
@@ -59,6 +58,9 @@ export async function renderChatPage(container) {
   lastMessageUnsub?.();
   lastMessageUnsub = null;
   await loadChats();
+  if (chatState.activeChatId) {
+    await openActiveChat(chatState.activeChatId);
+  }
 
   const root = document.createElement('div');
   root.className = 'chat-page';
@@ -83,17 +85,12 @@ export async function renderChatPage(container) {
   sendHint.className = 'chat-composer-hint';
   composer.append(input, sendBtn);
 
-  async function renderMessagesArea(options = {}) {
-    const skipFetch = options.skipFetch === true;
+  async function renderMessagesArea() {
     const chatId = chatState.activeChatId;
     mainHint.textContent = chatId ? `Chat: ${chatId}` : 'Pick a chat from the list.';
     messageWrap.replaceChildren();
     if (!chatId) {
       return;
-    }
-    if (!skipFetch) {
-      await loadActiveChat(chatId);
-      if (chatId !== chatState.activeChatId) return;
     }
     if (chatState.activeChatStatus === 'ok' && chatState.activeChat) {
       const label = labelForChat(chatState.activeChat);
@@ -104,18 +101,17 @@ export async function renderChatPage(container) {
     input.disabled = !canSend;
     sendBtn.disabled = !canSend;
     sendHint.textContent = canSend ? '' : 'Sending is only available for direct chats.';
-    if (!skipFetch) {
-      const loading = document.createElement('p');
-      loading.className = 'chat-empty';
-      loading.textContent = 'Loading messages…';
-      messageWrap.append(loading);
-      await loadMessages(chatId);
+    const msgState = getMessagesState(chatId);
+    if (msgState.status === 'loading') {
+      const p = document.createElement('p');
+      p.className = 'chat-empty';
+      p.textContent = 'Loading messages…';
+      messageWrap.append(p);
+      return;
     }
-    messageWrap.replaceChildren();
     if (chatId !== chatState.activeChatId) {
       return;
     }
-    const msgState = getMessagesState(chatId);
     if (msgState.status === 'error') {
       const p = document.createElement('p');
       p.className = 'chat-empty';
@@ -190,6 +186,7 @@ export async function renderChatPage(container) {
       setActiveChatId(chat.chatId);
       listEl.querySelectorAll('.chat-list-button').forEach((b) => b.removeAttribute('aria-current'));
       btn.setAttribute('aria-current', 'true');
+      await openActiveChat(chat.chatId);
       await renderMessagesArea();
     });
     li.append(btn);
@@ -225,7 +222,7 @@ export async function renderChatPage(container) {
     if (updatedChatId !== chatState.activeChatId) {
       return;
     }
-    void renderMessagesArea({ skipFetch: true });
+    void renderMessagesArea();
   };
   lastMessageUnsub = subscribeChatMessages(onRemoteMessages);
   const onHashLeave = () => {

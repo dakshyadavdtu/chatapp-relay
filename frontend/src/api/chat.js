@@ -21,6 +21,11 @@ export async function getChat(chatId) {
   return getJson(path);
 }
 
+export async function openChat(chatId) {
+  const path = `/api/chats/${encodeURIComponent(chatId)}/open`;
+  return getJson(path);
+}
+
 export async function sendMessage(recipientId, content, clientId) {
   return postJson('/api/chat/send', { recipientId, content, clientId });
 }
