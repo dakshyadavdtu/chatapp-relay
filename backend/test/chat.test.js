@@ -158,6 +158,32 @@ test('sendMessageBody echoes clientId', async () => {
   assert.equal(out.data.message.clientId, 'temp_123');
 });
 
+test('sendMessageToChat uses chat recipient and returns message', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const out = await chat.sendMessageToChat('u1', 'direct:u1:u2', {
+    content: 'hi via chat',
+    clientId: 'tmp_456',
+  });
+  assert.equal(out.ok, true);
+  assert.equal(out.data.message.chatId, 'direct:u1:u2');
+  assert.equal(out.data.message.recipientId, 'u2');
+  assert.equal(out.data.message.clientId, 'tmp_456');
+});
+
+test('openChatBody returns chat and messages', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  await chat.sendMessageToChat('u1', 'direct:u1:u2', { content: 'first', clientId: 'tmp_1' });
+
+  const res = await chat.openChatBody('u1', 'direct:u1:u2', new URLSearchParams(''));
+  assert.equal(res.ok, true);
+  assert.equal(res.data.chat.chatId, 'direct:u1:u2');
+  assert.equal(Array.isArray(res.data.messages), true);
+  assert.equal(res.data.messages.length >= 1, true);
+  assert.equal(res.data.messages[res.data.messages.length - 1].recipientId, 'u2');
+});
+
 test('messageListBody returns clientId and state from sent message', async () => {
   const storage = createStorage();
   const chat = createChatService(storage);

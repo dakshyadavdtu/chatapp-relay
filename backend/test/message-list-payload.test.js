@@ -30,6 +30,7 @@ test('messageListPayload preserves state, clientId, and timestamp fallback', () 
         id: 'msg_b',
         chatId: 'direct:x:y',
         senderId: 'x',
+        recipientId: 'y',
         body: 'hey',
         timestamp: 200,
         clientId: 'tmp_1',
@@ -42,5 +43,6 @@ test('messageListPayload preserves state, clientId, and timestamp fallback', () 
   assert.equal(m.createdAt, 200);
   assert.equal(m.clientId, 'tmp_1');
   assert.equal(m.state, 'DELIVERED');
+  assert.equal(m.recipientId, 'y');
   assert.equal(out.meta.count, 1);
 });
