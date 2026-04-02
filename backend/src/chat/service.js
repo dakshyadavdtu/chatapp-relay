@@ -93,6 +93,65 @@ export function createChatService(storage) {
         },
       };
     },
+    async sendMessageToChat(userId, chatId, payload) {
+      const content = typeof payload?.content === 'string' ? payload.content.trim() : '';
+      const clientId = typeof payload?.clientId === 'string' ? payload.clientId.trim() : null;
+      if (!content) {
+        return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'content required' };
+      }
+      if (content.length > MAX_MESSAGE_CONTENT_LENGTH) {
+        return {
+          ok: false,
+          status: 400,
+          code: 'CONTENT_TOO_LONG',
+          message: `content exceeds ${MAX_MESSAGE_CONTENT_LENGTH}`,
+        };
+      }
+      const chat = await storage.chats.get(chatId);
+      if (!chat) {
+        return { ok: false, status: 404, code: 'CHAT_NOT_FOUND', message: 'Chat not found' };
+      }
+      const members = Array.isArray(chat.members) ? chat.members : [];
+      if (!members.includes(userId)) {
+        return { ok: false, status: 403, code: 'CHAT_ACCESS_DENIED', message: 'Access denied' };
+      }
+      const recipientId = members.find((m) => m !== userId) ?? null;
+      if (!recipientId) {
+        return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'recipient missing' };
+      }
+      const created = await storage.messages.append({
+        chatId,
+        senderId: userId,
+        body: content,
+        clientId,
+      });
+      emitMessageCreated({
+        messageId: created.id,
+        chatId: created.chatId,
+        senderId: created.senderId,
+        recipientId,
+        content: created.body,
+        createdAt: created.createdAt,
+        clientId,
+      });
+      return {
+        ok: true,
+        status: 201,
+        data: {
+          message: {
+            id: created.id,
+            messageId: created.id,
+            chatId: created.chatId,
+            senderId: created.senderId,
+            recipientId,
+            content: created.body,
+            createdAt: created.createdAt,
+            clientId,
+            state: 'SENT',
+          },
+        },
+      };
+    },
     async chatListBody(userId) {
       const rows = await storage.chats.listForUser(userId);
       return chatListPayload(rows, userId);
