@@ -50,4 +50,5 @@ export function stopChatRealtime() {
     session.stop();
     session = null;
   }
+  lastStatus = 'disconnected';
 }
