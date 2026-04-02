@@ -184,6 +184,9 @@ export async function renderChatPage(container) {
     }
     btn.addEventListener('click', async () => {
       setActiveChatId(chat.chatId);
+      input.value = '';
+      sendHint.textContent = '';
+      sendBtn.disabled = true;
       listEl.querySelectorAll('.chat-list-button').forEach((b) => b.removeAttribute('aria-current'));
       btn.setAttribute('aria-current', 'true');
       await openActiveChat(chat.chatId);
