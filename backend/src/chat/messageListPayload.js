@@ -27,6 +27,7 @@ function toMessageWire(m) {
     messageId: m.id,
     chatId: m.chatId,
     senderId: m.senderId,
+    recipientId: m.recipientId ?? null,
     content: typeof m.body === 'string' ? m.body : '',
     createdAt,
     clientId: m.clientId ?? null,
