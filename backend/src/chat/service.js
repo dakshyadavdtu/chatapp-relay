@@ -108,6 +108,26 @@ export function createChatService(storage) {
       }
       return { ok: true, data: { chat: chatRowPayload(chat, userId) } };
     },
+    async openChatBody(userId, chatId, query) {
+      const chatRes = await this.chatBody(userId, chatId);
+      if (!chatRes.ok) {
+        return chatRes;
+      }
+      const { limit, beforeTs } = parseMessageListQuery(query ?? new URLSearchParams(''));
+      const messages = await storage.messages.listByChatId(chatId, {
+        limit,
+        beforeTs: beforeTs === null ? undefined : beforeTs,
+      });
+      const list = messageListPayload(messages, { limit, beforeTs });
+      return {
+        ok: true,
+        data: {
+          chat: chatRes.data.chat,
+          messages: list.messages,
+          meta: list.meta,
+        },
+      };
+    },
     async messageListBody(userId, chatId, query) {
       const open = await this.chatBody(userId, chatId);
       if (!open.ok) {
