@@ -29,3 +29,8 @@ export async function openChat(chatId) {
 export async function sendMessage(recipientId, content, clientId) {
   return postJson('/api/chat/send', { recipientId, content, clientId });
 }
+
+export async function sendMessageToChat(chatId, content, clientId) {
+  const path = `/api/chats/${encodeURIComponent(chatId)}/messages`;
+  return postJson(path, { content, clientId });
+}

@@ -33,6 +33,8 @@ function messageErrorText(code) {
 
 function sendErrorText(code) {
   const map = {
+    CHAT_NOT_FOUND: 'Chat not found.',
+    CHAT_ACCESS_DENIED: 'No access to this chat.',
     INVALID_PAYLOAD: 'Message text is required.',
     CONTENT_TOO_LONG: 'Message is too long.',
     NO_RECIPIENT: 'Cannot resolve chat recipient.',

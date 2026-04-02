@@ -1,4 +1,4 @@
-import { getChat, listChats, listMessages, openChat, sendMessage } from '../../api/chat.js';
+import { getChat, listChats, listMessages, openChat, sendMessage, sendMessageToChat } from '../../api/chat.js';
 import {
   messageKey,
   normalizeChatMessage,
@@ -305,7 +305,7 @@ export async function sendActiveMessage(content) {
   });
 
   try {
-    const res = await sendMessage(recipientId, content, clientId);
+    const res = await sendMessageToChat(chatId, content, clientId);
     chatState.sendStatus = 'ok';
     chatState.sendError = null;
     const msg = res?.data?.message;
