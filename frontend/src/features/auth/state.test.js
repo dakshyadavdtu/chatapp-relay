@@ -26,11 +26,13 @@ test('applySessionResult sets signed out when unauthenticated', () => {
 test('loadSession handles authenticated response', async () => {
   resetAuthState();
   const originalFetch = global.fetch;
-  global.fetch = async () =>
-    new Response(
-      JSON.stringify({ success: true, data: { user: { id: 'u1', username: 'u1' } } }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+  global.fetch = async () => ({
+    ok: true,
+    status: 200,
+    async json() {
+      return { success: true, data: { user: { id: 'u1', username: 'u1' } } };
+    },
+  });
   try {
     await loadSession();
     assert.equal(authState.status, 'signed_in');
@@ -44,11 +46,13 @@ test('loadSession handles authenticated response', async () => {
 test('loadSession handles unauthorized response', async () => {
   resetAuthState();
   const originalFetch = global.fetch;
-  global.fetch = async () =>
-    new Response(JSON.stringify({ success: false, code: 'UNAUTHORIZED' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  global.fetch = async () => ({
+    ok: false,
+    status: 401,
+    async json() {
+      return { success: false, code: 'UNAUTHORIZED' };
+    },
+  });
   try {
     await loadSession();
     assert.equal(authState.status, 'signed_out');

@@ -1,5 +1,5 @@
 export function apiBase() {
-  const raw = import.meta.env.VITE_API_BASE_URL ?? '';
+  const raw = import.meta?.env?.VITE_API_BASE_URL ?? '';
   if (!raw) {
     return '';
   }
