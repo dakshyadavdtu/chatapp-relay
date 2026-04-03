@@ -1,4 +1,4 @@
-import { fetchSession } from '../../api/auth.js';
+import { fetchSession, login, logout } from '../../api/auth.js';
 
 export const authState = {
   status: 'unknown',
@@ -42,4 +42,25 @@ export async function loadSession() {
     authState.sessionError = 'session_check_failed';
     return { authenticated: false };
   }
+}
+
+export async function performLogin(username, password) {
+  authState.sessionError = null;
+  const res = await login(username, password);
+  const user = res?.data?.user ?? res?.user ?? null;
+  if (!user) {
+    throw new Error('Invalid credentials');
+  }
+  setAuthUser(user);
+  return user;
+}
+
+export async function performLogout() {
+  authState.sessionError = null;
+  try {
+    await logout();
+  } catch {
+    /* ignore logout errors */
+  }
+  setAuthUser(null);
 }

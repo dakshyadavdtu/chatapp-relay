@@ -93,6 +93,19 @@ export function getActiveRecipientId() {
   return id ?? null;
 }
 
+export function resetChatState() {
+  chatState.activeChatId = null;
+  chatState.activeChat = null;
+  chatState.activeChatStatus = 'idle';
+  chatState.activeChatError = null;
+  chatState.chats = [];
+  chatState.loadStatus = 'idle';
+  chatState.loadError = null;
+  chatState.messagesByChat = {};
+  chatState.sendStatus = 'idle';
+  chatState.sendError = null;
+}
+
 export async function loadChats() {
   chatState.loadStatus = 'loading';
   chatState.loadError = null;
