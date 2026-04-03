@@ -28,11 +28,14 @@ test('health service', () => {
 function makeRes() {
   return {
     statusCode: null,
-    headers: null,
+    headers: {},
     body: null,
+    setHeader(name, value) {
+      this.headers[name] = value;
+    },
     writeHead(statusCode, headers) {
       this.statusCode = statusCode;
-      this.headers = headers;
+      this.headers = { ...(this.headers || {}), ...headers };
     },
     end(body) {
       this.body = body;
@@ -194,17 +197,54 @@ test('POST /api/login rejects missing fields', async () => {
   assert.equal(body.code, 'INVALID_CREDENTIALS');
 });
 
-test('POST /api/login rejects credentials until wired', async () => {
+test('POST /api/login accepts basic credentials', async () => {
   const handler = createHttpHandler();
   const req = makeJsonPost('/api/login', { username: 'a', password: 'b' });
   const res = makeRes();
 
   await handler(req, res);
 
-  assert.equal(res.statusCode, 401);
+  assert.equal(res.statusCode, 200);
   const body = JSON.parse(res.body);
-  assert.equal(body.success, false);
-  assert.equal(body.code, 'INVALID_CREDENTIALS');
+  assert.equal(body.success, true);
+  assert.equal(body.data?.user?.username, 'a');
+  assert.ok(res.headers['Set-Cookie']);
+});
+
+test('GET /api/me after login returns user', async () => {
+  const handler = createHttpHandler();
+  const loginReq = makeJsonPost('/api/login', { username: 'a', password: 'b' });
+  const loginRes = makeRes();
+  await handler(loginReq, loginRes);
+  const cookie = loginRes.headers['Set-Cookie'];
+  assert.ok(cookie);
+
+  const meReq = { url: '/api/me', method: 'GET', headers: { cookie } };
+  const meRes = makeRes();
+  await handler(meReq, meRes);
+  assert.equal(meRes.statusCode, 200);
+  const body = JSON.parse(meRes.body);
+  assert.equal(body.success, true);
+  assert.equal(body.data?.user?.username, 'a');
+});
+
+test('POST /api/logout clears session', async () => {
+  const handler = createHttpHandler();
+  const loginReq = makeJsonPost('/api/login', { username: 'a', password: 'b' });
+  const loginRes = makeRes();
+  await handler(loginReq, loginRes);
+  const cookie = loginRes.headers['Set-Cookie'];
+
+  const logoutReq = makeJsonPost('/api/logout', {});
+  logoutReq.headers.cookie = cookie;
+  const logoutRes = makeRes();
+  await handler(logoutReq, logoutRes);
+  assert.equal(logoutRes.statusCode, 200);
+
+  const meReq = { url: '/api/me', method: 'GET', headers: { cookie } };
+  const meRes = makeRes();
+  await handler(meReq, meRes);
+  assert.equal(meRes.statusCode, 401);
 });
 
 test('POST /api/auth/login same as login', async () => {
@@ -214,9 +254,9 @@ test('POST /api/auth/login same as login', async () => {
 
   await handler(req, res);
 
-  assert.equal(res.statusCode, 401);
+  assert.equal(res.statusCode, 200);
   const body = JSON.parse(res.body);
-  assert.equal(body.code, 'INVALID_CREDENTIALS');
+  assert.equal(body.data?.user?.username, 'a');
 });
 
 test('POST /api/auth/refresh unauthenticated', async () => {
@@ -239,7 +279,7 @@ test('POST /api/logout', async () => {
   await handler(req, res);
 
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(JSON.parse(res.body), { success: true, data: { ok: true } });
+  assert.deepEqual(JSON.parse(res.body), { success: true, data: {} });
 });
 
 test('POST /api/register not implemented', async () => {
