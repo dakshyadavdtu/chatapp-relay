@@ -29,10 +29,13 @@ export async function handleAuthLogin(ctx, res) {
     jsonErr(res, 400, 'username and password required', 'INVALID_CREDENTIALS');
     return;
   }
-  const user = await loginWithPassword(username.trim(), password);
-  if (!user) {
+  const out = await loginWithPassword(username.trim(), password);
+  if (!out?.ok) {
     jsonErr(res, 401, 'Invalid username or password', 'INVALID_CREDENTIALS');
     return;
   }
-  jsonOk(res, { user });
+  if (out.token) {
+    res.setHeader('Set-Cookie', `sid=${out.token}; Path=/; HttpOnly`);
+  }
+  jsonOk(res, { user: out.user });
 }

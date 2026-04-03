@@ -3,9 +3,9 @@ import { jsonErr, jsonOk } from '../../json.js';
 
 export async function handleAuthRefresh(ctx, res) {
   const out = await refreshWithRequest(ctx.req);
-  if (!out) {
+  if (!out?.ok) {
     jsonErr(res, 401, 'Not authenticated', 'UNAUTHORIZED');
     return;
   }
-  jsonOk(res, { ok: true });
+  jsonOk(res, { user: out.user });
 }
