@@ -4,6 +4,7 @@ import { renderChatPage } from '../pages/chat.js';
 import { renderHome } from '../pages/home.js';
 import { authState } from '../features/auth/state.js';
 import { startChatRealtime, stopChatRealtime } from '../features/chat/realtime.js';
+import { resetChatState } from '../features/chat/state.js';
 
 function getOutlet(root) {
   return root.querySelector('[data-outlet]');
@@ -15,6 +16,7 @@ async function renderRoute(outlet) {
   if (route === '/chat') {
     if (authState.sessionChecked && authState.status !== 'signed_in') {
       stopChatRealtime();
+      resetChatState();
       navigate('/');
       await renderHome(outlet);
       return;
