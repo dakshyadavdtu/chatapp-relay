@@ -84,4 +84,6 @@ export async function performLogout() {
     authState.logoutError = e?.code ?? 'logout_failed';
     setAuthUser(null);
   }
+  authState.loginStatus = 'idle';
+  authState.loginError = null;
 }
