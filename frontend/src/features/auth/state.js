@@ -71,11 +71,17 @@ export async function performLogin(username, password) {
 }
 
 export async function performLogout() {
+  authState.logoutStatus = 'loading';
+  authState.logoutError = null;
   authState.sessionError = null;
   try {
     await logout();
-  } catch {
-    /* ignore logout errors */
+    setAuthUser(null);
+    await loadSession();
+    authState.logoutStatus = 'idle';
+  } catch (e) {
+    authState.logoutStatus = 'error';
+    authState.logoutError = e?.code ?? 'logout_failed';
+    setAuthUser(null);
   }
-  setAuthUser(null);
 }

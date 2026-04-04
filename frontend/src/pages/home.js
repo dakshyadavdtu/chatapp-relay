@@ -45,6 +45,7 @@ export async function renderHome(container) {
     logoutBtn.textContent = 'Log out';
     logoutBtn.addEventListener('click', async () => {
       logoutBtn.disabled = true;
+      statusEl.textContent = 'Session: signing out...';
       await performLogout();
       stopChatRealtime();
       resetChatState();
