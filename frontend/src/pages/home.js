@@ -12,6 +12,8 @@ export async function renderHome(container) {
   const sessionLine = document.createElement('p');
   if (authState.status === 'checking') {
     sessionLine.textContent = 'Session: checking';
+  } else if (authState.sessionError) {
+    sessionLine.textContent = 'Session: check failed';
   } else if (authState.status === 'signed_in') {
     const name = authState.user?.username || authState.user?.name || authState.user?.id || 'user';
     sessionLine.textContent = `Session: signed in (${name})`;
