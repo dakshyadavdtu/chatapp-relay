@@ -13,10 +13,12 @@ function getOutlet(root) {
 async function renderRoute(outlet) {
   outlet.replaceChildren();
   const route = getRoute();
+  if (authState.status !== 'signed_in') {
+    stopChatRealtime();
+    resetChatState();
+  }
   if (route === '/chat') {
     if (authState.sessionChecked && authState.status !== 'signed_in') {
-      stopChatRealtime();
-      resetChatState();
       navigate('/');
       await renderHome(outlet);
       return;
