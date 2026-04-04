@@ -5,6 +5,10 @@ export const authState = {
   user: null,
   sessionChecked: false,
   sessionError: null,
+  loginStatus: 'idle',
+  loginError: null,
+  logoutStatus: 'idle',
+  logoutError: null,
 };
 
 export function applySessionResult(result) {
@@ -45,14 +49,25 @@ export async function loadSession() {
 }
 
 export async function performLogin(username, password) {
+  authState.loginStatus = 'loading';
+  authState.loginError = null;
   authState.sessionError = null;
-  const res = await login(username, password);
-  const user = res?.data?.user ?? res?.user ?? null;
-  if (!user) {
-    throw new Error('Invalid credentials');
+  try {
+    const res = await login(username, password);
+    const user = res?.data?.user ?? res?.user ?? null;
+    if (!user) {
+      throw new Error('Invalid credentials');
+    }
+    // Refresh session from server to align state with cookie.
+    await loadSession();
+    authState.loginStatus = 'idle';
+    return user;
+  } catch (e) {
+    authState.loginStatus = 'error';
+    authState.loginError = e?.code ?? e?.message ?? 'login_failed';
+    setAuthUser(null);
+    throw e;
   }
-  setAuthUser(user);
-  return user;
 }
 
 export async function performLogout() {

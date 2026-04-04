@@ -73,6 +73,8 @@ export async function renderHome(container) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       submitBtn.disabled = true;
+      userInput.disabled = true;
+      passInput.disabled = true;
       msg.textContent = 'Signing in...';
       try {
         await performLogin(userInput.value.trim(), passInput.value);
@@ -82,8 +84,13 @@ export async function renderHome(container) {
       } catch (err) {
         msg.textContent = err?.message ?? 'Login failed';
         submitBtn.disabled = false;
+        userInput.disabled = false;
+        passInput.disabled = false;
         return;
       }
+      submitBtn.disabled = false;
+      userInput.disabled = false;
+      passInput.disabled = false;
     });
     authBox.append(form);
   }
