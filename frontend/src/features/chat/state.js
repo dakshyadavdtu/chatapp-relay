@@ -12,6 +12,8 @@ export const chatState = {
   activeChat: null,
   activeChatStatus: 'idle',
   activeChatError: null,
+  shellStatus: 'idle',
+  shellError: null,
   chats: [],
   loadStatus: 'idle',
   loadError: null,
@@ -98,6 +100,8 @@ export function resetChatState() {
   chatState.activeChat = null;
   chatState.activeChatStatus = 'idle';
   chatState.activeChatError = null;
+  chatState.shellStatus = 'idle';
+  chatState.shellError = null;
   chatState.chats = [];
   chatState.loadStatus = 'idle';
   chatState.loadError = null;
@@ -142,6 +146,41 @@ export async function loadChats() {
     chatState.loadStatus = 'error';
     chatState.loadError = e?.code ?? 'fetch_failed';
   }
+}
+
+export async function bootstrapChatShell() {
+  chatState.shellStatus = 'loading';
+  chatState.shellError = null;
+  await loadChats();
+  if (chatState.loadStatus === 'error') {
+    chatState.shellStatus = 'error';
+    chatState.shellError = chatState.loadError;
+    return { ok: false, code: chatState.loadError };
+  }
+
+  if (!chatState.activeChatId && chatState.chats.length === 0) {
+    chatState.shellStatus = 'empty';
+    chatState.shellError = null;
+    return { ok: true, empty: true };
+  }
+
+  if (!chatState.activeChatId && chatState.chats.length > 0) {
+    setActiveChatId(chatState.chats[0].chatId);
+  }
+
+  if (chatState.activeChatId) {
+    await openActiveChat(chatState.activeChatId);
+  }
+
+  if (chatState.activeChatStatus === 'error') {
+    chatState.shellStatus = 'error';
+    chatState.shellError = chatState.activeChatError;
+    return { ok: false, code: chatState.activeChatError };
+  }
+
+  chatState.shellStatus = 'ready';
+  chatState.shellError = null;
+  return { ok: true };
 }
 
 export async function loadMessages(chatId) {

@@ -4,7 +4,7 @@ import {
   getActiveRecipientId,
   getMessagesState,
   chatState,
-  loadChats,
+  bootstrapChatShell,
   openActiveChat,
   sendActiveMessage,
   setActiveChatId,
@@ -59,10 +59,7 @@ let lastMessageUnsub = null;
 export async function renderChatPage(container) {
   lastMessageUnsub?.();
   lastMessageUnsub = null;
-  await loadChats();
-  if (chatState.activeChatId) {
-    await openActiveChat(chatState.activeChatId);
-  }
+  await bootstrapChatShell();
 
   const root = document.createElement('div');
   root.className = 'chat-page';
