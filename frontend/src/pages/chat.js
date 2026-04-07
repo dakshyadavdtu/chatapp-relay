@@ -125,9 +125,18 @@ export async function renderChatPage(container) {
     }
     const recipientId = getActiveRecipientId();
     const canSend = Boolean(recipientId);
-    input.disabled = !canSend;
-    sendBtn.disabled = !canSend;
-    sendHint.textContent = canSend ? '' : 'Sending is only available for direct chats.';
+    const sending = chatState.sendStatus === 'sending';
+    input.disabled = !canSend || sending;
+    sendBtn.disabled = !canSend || sending;
+    if (!canSend) {
+      sendHint.textContent = 'Sending is only available for direct chats.';
+    } else if (sending) {
+      sendHint.textContent = 'Sending…';
+    } else if (chatState.sendStatus === 'error') {
+      sendHint.textContent = sendErrorText(chatState.sendError);
+    } else {
+      sendHint.textContent = '';
+    }
     const msgState = getMessagesState(chatId);
     if (msgState.status === 'loading') {
       const p = document.createElement('p');
@@ -234,15 +243,18 @@ export async function renderChatPage(container) {
       return;
     }
     sendBtn.disabled = true;
+    input.disabled = true;
     sendHint.textContent = 'Sending…';
     const out = await sendActiveMessage(text);
     if (!out.ok) {
       sendHint.textContent = sendErrorText(out.code);
+      input.disabled = false;
       sendBtn.disabled = !getActiveRecipientId();
       return;
     }
     input.value = '';
     sendHint.textContent = '';
+    input.disabled = false;
     sendBtn.disabled = !getActiveRecipientId();
   });
 
