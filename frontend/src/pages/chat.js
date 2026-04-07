@@ -7,6 +7,7 @@ import {
   bootstrapChatShell,
   openActiveChat,
   sendActiveMessage,
+  refreshActiveChat,
   setActiveChatId,
   subscribeChatMessages,
 } from '../features/chat/state.js';
@@ -256,6 +257,8 @@ export async function renderChatPage(container) {
     sendHint.textContent = '';
     input.disabled = false;
     sendBtn.disabled = !getActiveRecipientId();
+    await refreshActiveChat();
+    await renderMessagesArea();
   });
 
   main.append(mainHint, messageWrap, composer, sendHint);
