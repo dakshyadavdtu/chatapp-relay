@@ -224,6 +224,7 @@ export async function loadMessages(chatId) {
       status: 'ok',
       error: null,
     };
+    notifyChatMessages(chatId);
   } catch (e) {
     chatState.messagesByChat[chatId] = {
       items: [],
@@ -231,6 +232,7 @@ export async function loadMessages(chatId) {
       status: 'error',
       error: e?.code ?? 'fetch_failed',
     };
+    notifyChatMessages(chatId);
   }
 }
 
