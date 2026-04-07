@@ -139,7 +139,7 @@ export async function renderChatPage(container) {
       sendHint.textContent = '';
     }
     const msgState = getMessagesState(chatId);
-    if (msgState.status === 'loading') {
+    if (msgState.status === 'idle' || msgState.status === 'loading') {
       const p = document.createElement('p');
       p.className = 'chat-empty';
       p.textContent = 'Loading messages…';
