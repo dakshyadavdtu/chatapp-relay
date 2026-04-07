@@ -1,5 +1,5 @@
 import { getRoute } from '../app/router.js';
-import { messageKey } from '../features/chat/messageList.js';
+import { messageKey, sortMessagesOldestFirst } from '../features/chat/messageList.js';
 import {
   getActiveRecipientId,
   getMessagesState,
@@ -146,7 +146,8 @@ export async function renderChatPage(container) {
       messageWrap.append(p);
       return;
     }
-    if (msgState.items.length === 0) {
+    const items = sortMessagesOldestFirst(msgState.items);
+    if (items.length === 0) {
       const p = document.createElement('p');
       p.className = 'chat-empty';
       p.textContent = 'No messages yet.';
@@ -155,7 +156,7 @@ export async function renderChatPage(container) {
     }
     const ul = document.createElement('ul');
     ul.className = 'chat-message-list';
-    for (const m of msgState.items) {
+    for (const m of items) {
       const li = document.createElement('li');
       li.className = 'chat-message-list-item';
       const mk = messageKey(m);
