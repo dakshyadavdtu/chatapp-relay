@@ -43,6 +43,16 @@ function sendErrorText(code) {
   return map[code] ?? 'Could not send message.';
 }
 
+function chatErrorText(code) {
+  const map = {
+    bad_response: 'Could not load chat.',
+    fetch_failed: 'Could not load chat.',
+    CHAT_NOT_FOUND: 'Chat not found.',
+    CHAT_ACCESS_DENIED: 'No access to this chat.',
+  };
+  return map[code] ?? 'Could not load chat.';
+}
+
 function formatTime(ts) {
   if (typeof ts !== 'number') {
     return '';
@@ -94,6 +104,24 @@ export async function renderChatPage(container) {
     if (chatState.activeChatStatus === 'ok' && chatState.activeChat) {
       const label = labelForChat(chatState.activeChat);
       mainHint.textContent = `Chat: ${label}`;
+    }
+    if (chatState.activeChatStatus === 'loading') {
+      const p = document.createElement('p');
+      p.className = 'chat-empty';
+      p.textContent = 'Opening chat…';
+      messageWrap.append(p);
+      input.disabled = true;
+      sendBtn.disabled = true;
+      return;
+    }
+    if (chatState.activeChatStatus === 'error') {
+      const p = document.createElement('p');
+      p.className = 'chat-empty';
+      p.textContent = chatErrorText(chatState.activeChatError);
+      messageWrap.append(p);
+      input.disabled = true;
+      sendBtn.disabled = true;
+      return;
     }
     const recipientId = getActiveRecipientId();
     const canSend = Boolean(recipientId);
