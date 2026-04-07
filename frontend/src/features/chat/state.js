@@ -22,6 +22,20 @@ export const chatState = {
   sendError: null,
 };
 
+const chatApi = {
+  sendMessageToChat,
+};
+
+export function setChatApi(api) {
+  if (api?.sendMessageToChat) {
+    chatApi.sendMessageToChat = api.sendMessageToChat;
+  }
+}
+
+export function resetChatApi() {
+  chatApi.sendMessageToChat = sendMessageToChat;
+}
+
 const messageListeners = new Set();
 
 export function subscribeChatMessages(fn) {
@@ -336,6 +350,8 @@ export async function refreshActiveChat() {
 export async function sendActiveMessage(content) {
   const chatId = chatState.activeChatId;
   if (!chatId) {
+    chatState.sendStatus = 'error';
+    chatState.sendError = 'NO_ACTIVE_CHAT';
     return { ok: false, code: 'NO_ACTIVE_CHAT' };
   }
   const recipientId = getActiveRecipientId();
@@ -357,7 +373,10 @@ export async function sendActiveMessage(content) {
   });
 
   try {
-    const res = await sendMessageToChat(chatId, content, clientId);
+    const res = await chatApi.sendMessageToChat(chatId, content, clientId);
+    if (res?.success === false) {
+      throw { code: res.code ?? 'SEND_FAILED' };
+    }
     chatState.sendStatus = 'ok';
     chatState.sendError = null;
     const msg = res?.data?.message;
