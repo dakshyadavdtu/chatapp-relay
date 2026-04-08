@@ -20,7 +20,9 @@ export function getChatSocketStatus() {
 }
 
 export function startChatRealtime() {
-  stopChatRealtime();
+  if (session) {
+    return;
+  }
 
   unsubConn = subscribeConnection((st) => {
     if (st.status === 'connected' && lastStatus !== 'connected') {
