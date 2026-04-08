@@ -37,7 +37,7 @@ Chat API basics: `GET /api/chats` lists chats, `GET /api/chats/:chatId/open` ret
 ```bash
 npm install
 npm run dev
-# optional: npm test (merge helpers)
+# optional: npm test (frontend feature tests)
 ```
 
 Auth is minimal: use the home page form with any non-empty username/password. The backend sets a `sid` cookie, `/api/me` returns the current user while it’s valid, and the home page logout button clears the session, stops chat, and sends you back home if you were on `#/chat`.
