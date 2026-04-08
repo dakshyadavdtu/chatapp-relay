@@ -87,6 +87,16 @@ export function applyIncomingMessage(raw) {
     status: prev.status === 'error' ? prev.status : 'ok',
     error: prev.error,
   };
+  if (
+    chatId === chatState.activeChatId &&
+    chatState.sendStatus === 'sending' &&
+    existIdx >= 0 &&
+    items[existIdx]?.state === 'PENDING' &&
+    row.state === 'SENT'
+  ) {
+    chatState.sendStatus = 'ok';
+    chatState.sendError = null;
+  }
   notifyChatMessages(chatId);
 }
 
