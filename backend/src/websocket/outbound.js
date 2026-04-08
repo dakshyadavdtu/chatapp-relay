@@ -9,6 +9,7 @@ export function buildMessageCreatedPayload(evt) {
     senderId: evt?.senderId ?? null,
     recipientId: evt?.recipientId ?? null,
     content: evt?.content ?? '',
+    createdAt: evt?.createdAt ?? Date.now(),
     timestamp: evt?.createdAt ?? Date.now(),
     state: 'SENT',
     message: {
@@ -24,5 +25,4 @@ export function buildMessageCreatedPayload(evt) {
     },
   };
 }
-
 

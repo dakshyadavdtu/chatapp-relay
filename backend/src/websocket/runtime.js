@@ -33,22 +33,14 @@ export function createWebSocketRuntime() {
       const recipientId = evt?.recipientId ?? null;
       const senderId = evt?.senderId ?? null;
 
-      let delivered = false;
       if (recipientId) {
         const recipientConns = getConnectionsForUser(recipientId);
         for (const ctx of recipientConns) {
           ctx.send(payload);
-          delivered = true;
         }
       }
       if (senderId && senderId !== recipientId) {
         for (const ctx of getConnectionsForUser(senderId)) {
-          ctx.send(payload);
-          delivered = true;
-        }
-      }
-      if (!delivered) {
-        for (const ctx of connections.values()) {
           ctx.send(payload);
         }
       }

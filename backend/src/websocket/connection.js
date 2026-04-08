@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { dispatchIncomingMessage } from './messages.js';
 import { onConnectionClose, onConnectionOpen } from './presence.js';
 import { registerUserConnection, removeUserConnection } from './connections.js';
+import { getSession } from '../auth/session.js';
 
 function sendJson(ws, payload) {
   if (ws.readyState === 1) {
@@ -10,6 +11,7 @@ function sendJson(ws, payload) {
 }
 
 export function handleConnection(ws, req, hooks = {}) {
+  let closed = false;
   const ctx = {
     id: randomUUID(),
     remoteAddress: req.socket?.remoteAddress ?? null,
@@ -24,8 +26,20 @@ export function handleConnection(ws, req, hooks = {}) {
   if (typeof hooks.onOpen === 'function') {
     hooks.onOpen(ctx);
   }
+  void getSession(req)
+    .then((session) => {
+      if (closed) {
+        return;
+      }
+      const userId = session?.user?.id;
+      if (!userId) {
+        return;
+      }
+      ctx.userId = String(userId);
+      registerUserConnection(ctx.userId, ctx);
+    })
+    .catch(() => {});
   onConnectionOpen(ctx);
-  let closed = false;
   const closeOnce = () => {
     if (closed) {
       return;
