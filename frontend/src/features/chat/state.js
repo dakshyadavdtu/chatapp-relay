@@ -84,8 +84,8 @@ export function applyIncomingMessage(raw) {
   chatState.messagesByChat[chatId] = {
     ...prev,
     items: sortMessagesOldestFirst(nextItems),
-    status: prev.status === 'error' ? prev.status : 'ok',
-    error: prev.error,
+    status: 'ok',
+    error: null,
   };
   if (
     chatId === chatState.activeChatId &&
