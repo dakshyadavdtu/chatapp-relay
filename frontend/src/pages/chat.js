@@ -1,5 +1,6 @@
 import { getRoute } from '../app/router.js';
 import { messageKey, sortMessagesOldestFirst } from '../features/chat/messageList.js';
+import { getConnectionState, subscribeConnection } from '../transport/connectionState.js';
 import {
   getActiveRecipientId,
   getMessagesState,
@@ -66,10 +67,23 @@ function formatTime(ts) {
 }
 
 let lastMessageUnsub = null;
+let lastConnectionUnsub = null;
+
+function socketStateText(status) {
+  const map = {
+    connected: 'Socket: connected',
+    connecting: 'Socket: connecting…',
+    reconnecting: 'Socket: reconnecting…',
+    disconnected: 'Socket: disconnected',
+  };
+  return map[status] ?? 'Socket: disconnected';
+}
 
 export async function renderChatPage(container) {
   lastMessageUnsub?.();
+  lastConnectionUnsub?.();
   lastMessageUnsub = null;
+  lastConnectionUnsub = null;
   await bootstrapChatShell();
 
   const root = document.createElement('div');
@@ -93,6 +107,12 @@ export async function renderChatPage(container) {
   sendBtn.textContent = 'Send';
   const sendHint = document.createElement('p');
   sendHint.className = 'chat-composer-hint';
+  const connectionHint = document.createElement('p');
+  connectionHint.className = 'chat-connection-state';
+  const setConnectionHint = () => {
+    connectionHint.textContent = socketStateText(getConnectionState().status);
+  };
+  setConnectionHint();
   composer.append(input, sendBtn);
 
   async function renderMessagesArea() {
@@ -261,7 +281,7 @@ export async function renderChatPage(container) {
     await renderMessagesArea();
   });
 
-  main.append(mainHint, messageWrap, composer, sendHint);
+  main.append(mainHint, messageWrap, composer, sendHint, connectionHint);
   await renderMessagesArea();
 
   const onRemoteMessages = (updatedChatId) => {
@@ -271,10 +291,15 @@ export async function renderChatPage(container) {
     void renderMessagesArea();
   };
   lastMessageUnsub = subscribeChatMessages(onRemoteMessages);
+  lastConnectionUnsub = subscribeConnection(() => {
+    setConnectionHint();
+  });
   const onHashLeave = () => {
     if (getRoute() !== '/chat') {
       lastMessageUnsub?.();
+      lastConnectionUnsub?.();
       lastMessageUnsub = null;
+      lastConnectionUnsub = null;
       window.removeEventListener('hashchange', onHashLeave);
     }
   };
