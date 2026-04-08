@@ -5,17 +5,9 @@ import { getConnectionsForUser, registerUserConnection } from './connections.js'
 
 export function createWebSocketRuntime() {
   const wss = new WebSocketServer({ noServer: true });
-  const connections = new Map();
 
   wss.on('connection', (ws, req) => {
-    handleConnection(ws, req, {
-      onOpen(ctx) {
-        connections.set(ctx.id, ctx);
-      },
-      onClose(ctx) {
-        connections.delete(ctx.id);
-      },
-    });
+    handleConnection(ws, req);
   });
 
   return {

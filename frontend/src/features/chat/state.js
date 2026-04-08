@@ -1,4 +1,4 @@
-import { getChat, listChats, listMessages, openChat, sendMessage, sendMessageToChat } from '../../api/chat.js';
+import { getChat, listChats, listMessages, openChat, sendMessageToChat } from '../../api/chat.js';
 import {
   messageKey,
   normalizeChatMessage,
