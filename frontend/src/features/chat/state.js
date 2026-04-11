@@ -1,4 +1,5 @@
 import { getChat, listChats, listMessages, openChat, sendMessageToChat } from '../../api/chat.js';
+import { authState } from '../auth/state.js';
 import {
   messageKey,
   normalizeChatMessage,
@@ -51,6 +52,75 @@ function notifyChatMessages(chatId) {
   }
 }
 
+function sortChatsNewestFirst(list) {
+  return [...list].sort((a, b) => {
+    const ta = Number.isFinite(a?.updatedAt) ? a.updatedAt : 0;
+    const tb = Number.isFinite(b?.updatedAt) ? b.updatedAt : 0;
+    if (ta !== tb) {
+      return tb - ta;
+    }
+    return String(a?.chatId ?? '').localeCompare(String(b?.chatId ?? ''));
+  });
+}
+
+function currentUserId() {
+  return authState.user?.id ?? 'u1';
+}
+
+function buildLastMessageFromRow(row) {
+  const createdAt = Number.isFinite(row?.createdAt) ? row.createdAt : Date.now();
+  return {
+    id: row?.messageId ?? row?.id ?? null,
+    senderId: row?.senderId ?? null,
+    content: typeof row?.content === 'string' ? row.content : '',
+    createdAt,
+  };
+}
+
+function upsertChatSummaryFromMessage(row, opts = {}) {
+  const chatId = row?.chatId;
+  if (!chatId) {
+    return;
+  }
+  const incrementUnread = opts.incrementUnread === true;
+  const clearUnread = opts.clearUnread === true;
+  const lastMessage = buildLastMessageFromRow(row);
+  const updatedAt = lastMessage.createdAt;
+  const idx = chatState.chats.findIndex((chat) => chat.chatId === chatId);
+  if (idx >= 0) {
+    const current = chatState.chats[idx];
+    const baseUnread = Number.isFinite(current?.unreadCount) ? current.unreadCount : 0;
+    const unreadCount = clearUnread ? 0 : baseUnread + (incrementUnread ? 1 : 0);
+    const next = {
+      ...current,
+      unreadCount: Math.max(0, unreadCount),
+      updatedAt: Number.isFinite(current?.updatedAt)
+        ? Math.max(current.updatedAt, updatedAt)
+        : updatedAt,
+      lastMessage,
+    };
+    const chats = [...chatState.chats];
+    chats[idx] = next;
+    chatState.chats = sortChatsNewestFirst(chats);
+    return;
+  }
+  const me = currentUserId();
+  const participants = [row?.senderId, row?.recipientId]
+    .filter((id) => typeof id === 'string' && id.trim() !== '' && id !== me);
+  chatState.chats = sortChatsNewestFirst([
+    ...chatState.chats,
+    {
+      chatId,
+      type: 'direct',
+      title: null,
+      participants,
+      unreadCount: incrementUnread ? 1 : 0,
+      updatedAt,
+      lastMessage,
+    },
+  ]);
+}
+
 export function applyIncomingMessage(raw) {
   const chatId = raw?.chatId;
   if (!chatId) {
@@ -87,6 +157,13 @@ export function applyIncomingMessage(raw) {
     status: 'ok',
     error: null,
   };
+  const me = currentUserId();
+  const isFromOtherUser = typeof row.senderId === 'string' ? row.senderId !== me : false;
+  const isActiveChat = chatId === chatState.activeChatId;
+  upsertChatSummaryFromMessage(row, {
+    incrementUnread: !isActiveChat && isFromOtherUser && existIdx < 0,
+    clearUnread: isActiveChat,
+  });
   if (
     chatId === chatState.activeChatId &&
     chatState.sendStatus === 'sending' &&
