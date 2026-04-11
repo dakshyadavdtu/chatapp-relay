@@ -204,8 +204,13 @@ async function persistChatRead(chatId, lastReadMessageId) {
     if (!out?.success) {
       throw { code: out?.code ?? 'READ_SYNC_FAILED' };
     }
-    setChatUnreadCount(chatId, 0);
-    forcedReadByChat.set(chatId, lastReadMessageId);
+    const unreadCount = Number.isFinite(out?.data?.unreadCount) ? out.data.unreadCount : 0;
+    const storedMessageId =
+      typeof out?.data?.lastReadMessageId === 'string' && out.data.lastReadMessageId.trim()
+        ? out.data.lastReadMessageId
+        : lastReadMessageId;
+    setChatUnreadCount(chatId, unreadCount);
+    forcedReadByChat.set(chatId, storedMessageId);
     setChatReadStatus(chatId, 'ok', null);
     void loadChats();
   } catch (e) {

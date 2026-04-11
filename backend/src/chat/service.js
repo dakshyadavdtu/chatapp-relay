@@ -248,7 +248,12 @@ export function createChatService(storage) {
       if (lastReadMessageId) {
         message = list.find((row) => row?.id === lastReadMessageId) ?? null;
         if (!message) {
-          return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'lastReadMessageId not found' };
+          return {
+            ok: false,
+            status: 404,
+            code: 'READ_MESSAGE_NOT_FOUND',
+            message: 'lastReadMessageId not found',
+          };
         }
       } else {
         message = list[list.length - 1] ?? null;
