@@ -53,6 +53,7 @@ export function resetChatApi() {
 
 const messageListeners = new Set();
 const lastReadSyncByChat = new Map();
+const forcedReadByChat = new Map();
 
 export function subscribeChatMessages(fn) {
   messageListeners.add(fn);
@@ -204,9 +205,12 @@ async function persistChatRead(chatId, lastReadMessageId) {
       throw { code: out?.code ?? 'READ_SYNC_FAILED' };
     }
     setChatUnreadCount(chatId, 0);
+    forcedReadByChat.set(chatId, lastReadMessageId);
     setChatReadStatus(chatId, 'ok', null);
+    void loadChats();
   } catch (e) {
     lastReadSyncByChat.delete(chatId);
+    forcedReadByChat.delete(chatId);
     setChatReadStatus(chatId, 'error', e?.code ?? 'READ_SYNC_FAILED');
   }
   notifyChatMessages(chatId);
@@ -262,6 +266,9 @@ export function applyIncomingMessage(raw) {
   const me = currentUserId();
   const isFromOtherUser = typeof row.senderId === 'string' ? row.senderId !== me : false;
   const isActiveChat = chatId === chatState.activeChatId;
+  if (!isActiveChat && isFromOtherUser && existIdx < 0) {
+    forcedReadByChat.delete(chatId);
+  }
   upsertChatSummaryFromMessage(row, {
     incrementUnread: !isActiveChat && isFromOtherUser && existIdx < 0,
     clearUnread: isActiveChat,
@@ -292,6 +299,7 @@ export function setActiveChatId(chatId) {
   setChatUnreadCount(chatId, 0);
   if (chatId) {
     setChatReadStatus(chatId, 'idle', null);
+    forcedReadByChat.set(chatId, latestMessageIdForChat(chatId) ?? '__active__');
   }
   chatState.sendStatus = 'idle';
   chatState.sendError = null;
@@ -321,6 +329,7 @@ export function resetChatState() {
   chatState.readStatusByChat = {};
   chatState.readErrorByChat = {};
   lastReadSyncByChat.clear();
+  forcedReadByChat.clear();
 }
 
 export async function loadChats() {
@@ -340,11 +349,30 @@ export async function loadChats() {
       chatState.loadError = 'bad_response';
       return;
     }
+    const localChatsById = new Map(chatState.chats.map((chat) => [chat.chatId, chat]));
     chatState.chats = sortChatsNewestFirst(
-      r.data.chats.map((chat) => ({
-        ...chat,
-        unreadCount: Number.isFinite(chat?.unreadCount) ? chat.unreadCount : 0,
-      })),
+      r.data.chats.map((chat) => {
+        const local = localChatsById.get(chat.chatId) ?? null;
+        const remoteUpdatedAt = Number.isFinite(chat?.updatedAt) ? chat.updatedAt : 0;
+        const localUpdatedAt = Number.isFinite(local?.updatedAt) ? local.updatedAt : 0;
+        const remoteUnread = Number.isFinite(chat?.unreadCount) ? chat.unreadCount : 0;
+        const localUnread = Number.isFinite(local?.unreadCount) ? local.unreadCount : 0;
+        const hasReadLock = forcedReadByChat.has(chat.chatId);
+        let unreadCount = remoteUnread;
+        if (chat.chatId === chatState.activeChatId || hasReadLock) {
+          unreadCount = 0;
+        } else if (localUpdatedAt > remoteUpdatedAt) {
+          unreadCount = localUnread;
+        }
+        return {
+          ...chat,
+          unreadCount,
+          updatedAt: localUpdatedAt > remoteUpdatedAt ? localUpdatedAt : remoteUpdatedAt,
+          lastMessage: localUpdatedAt > remoteUpdatedAt
+            ? local?.lastMessage ?? chat?.lastMessage ?? null
+            : chat?.lastMessage ?? local?.lastMessage ?? null,
+        };
+      }),
     );
     chatState.loadStatus = 'ok';
     if (
