@@ -1,4 +1,11 @@
-import { getChat, listChats, listMessages, openChat, sendMessageToChat } from '../../api/chat.js';
+import {
+  getChat,
+  listChats,
+  listMessages,
+  markChatRead,
+  openChat,
+  sendMessageToChat,
+} from '../../api/chat.js';
 import { authState } from '../auth/state.js';
 import {
   messageKey,
@@ -21,23 +28,31 @@ export const chatState = {
   messagesByChat: {},
   sendStatus: 'idle',
   sendError: null,
+  readStatusByChat: {},
+  readErrorByChat: {},
 };
 
 const chatApi = {
   sendMessageToChat,
+  markChatRead,
 };
 
 export function setChatApi(api) {
   if (api?.sendMessageToChat) {
     chatApi.sendMessageToChat = api.sendMessageToChat;
   }
+  if (api?.markChatRead) {
+    chatApi.markChatRead = api.markChatRead;
+  }
 }
 
 export function resetChatApi() {
   chatApi.sendMessageToChat = sendMessageToChat;
+  chatApi.markChatRead = markChatRead;
 }
 
 const messageListeners = new Set();
+const lastReadSyncByChat = new Map();
 
 export function subscribeChatMessages(fn) {
   messageListeners.add(fn);
@@ -137,6 +152,77 @@ function setChatUnreadCount(chatId, unreadCount) {
   chatState.chats = chats;
 }
 
+function setChatReadStatus(chatId, status, error = null) {
+  if (!chatId) {
+    return;
+  }
+  chatState.readStatusByChat[chatId] = status;
+  chatState.readErrorByChat[chatId] = error;
+}
+
+function latestMessageIdForChat(chatId) {
+  const items = chatState.messagesByChat[chatId]?.items ?? [];
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+  const last = items[items.length - 1];
+  const messageId = last?.messageId ?? last?.id ?? null;
+  return messageId ? String(messageId) : null;
+}
+
+function shouldPersistRead(chatId) {
+  if (!chatId || chatId !== chatState.activeChatId) {
+    return false;
+  }
+  const items = chatState.messagesByChat[chatId]?.items ?? [];
+  if (!Array.isArray(items) || items.length === 0) {
+    return false;
+  }
+  const latest = items[items.length - 1];
+  const me = currentUserId();
+  if (!latest?.senderId || latest.senderId === me) {
+    return false;
+  }
+  const messageId = latest.messageId ?? latest.id;
+  return Boolean(messageId);
+}
+
+async function persistChatRead(chatId, lastReadMessageId) {
+  if (!chatId || !lastReadMessageId) {
+    return;
+  }
+  const key = `${chatId}:${lastReadMessageId}`;
+  if (lastReadSyncByChat.get(chatId) === key) {
+    return;
+  }
+  lastReadSyncByChat.set(chatId, key);
+  setChatReadStatus(chatId, 'saving', null);
+  notifyChatMessages(chatId);
+  try {
+    const out = await chatApi.markChatRead(chatId, lastReadMessageId);
+    if (!out?.success) {
+      throw { code: out?.code ?? 'READ_SYNC_FAILED' };
+    }
+    setChatUnreadCount(chatId, 0);
+    setChatReadStatus(chatId, 'ok', null);
+  } catch (e) {
+    lastReadSyncByChat.delete(chatId);
+    setChatReadStatus(chatId, 'error', e?.code ?? 'READ_SYNC_FAILED');
+  }
+  notifyChatMessages(chatId);
+}
+
+function scheduleActiveChatRead(chatId) {
+  if (!shouldPersistRead(chatId)) {
+    return;
+  }
+  const latestId = latestMessageIdForChat(chatId);
+  if (!latestId) {
+    return;
+  }
+  void persistChatRead(chatId, latestId);
+}
+
 export function applyIncomingMessage(raw) {
   const chatId = raw?.chatId;
   if (!chatId) {
@@ -180,6 +266,9 @@ export function applyIncomingMessage(raw) {
     incrementUnread: !isActiveChat && isFromOtherUser && existIdx < 0,
     clearUnread: isActiveChat,
   });
+  if (isActiveChat && isFromOtherUser) {
+    scheduleActiveChatRead(chatId);
+  }
   if (
     chatId === chatState.activeChatId &&
     chatState.sendStatus === 'sending' &&
@@ -201,6 +290,9 @@ export function setActiveChatId(chatId) {
   }
   chatState.activeChatId = chatId;
   setChatUnreadCount(chatId, 0);
+  if (chatId) {
+    setChatReadStatus(chatId, 'idle', null);
+  }
   chatState.sendStatus = 'idle';
   chatState.sendError = null;
 }
@@ -226,6 +318,9 @@ export function resetChatState() {
   chatState.messagesByChat = {};
   chatState.sendStatus = 'idle';
   chatState.sendError = null;
+  chatState.readStatusByChat = {};
+  chatState.readErrorByChat = {};
+  lastReadSyncByChat.clear();
 }
 
 export async function loadChats() {
@@ -336,6 +431,9 @@ export async function loadMessages(chatId) {
       status: 'ok',
       error: null,
     };
+    if (chatId === chatState.activeChatId) {
+      scheduleActiveChatRead(chatId);
+    }
     notifyChatMessages(chatId);
   } catch (e) {
     chatState.messagesByChat[chatId] = {
@@ -393,6 +491,7 @@ export async function openActiveChat(chatId) {
       status: 'ok',
       error: null,
     };
+    scheduleActiveChatRead(chatId);
     notifyChatMessages(chatId);
   } catch (e) {
     if (chatId !== chatState.activeChatId) {

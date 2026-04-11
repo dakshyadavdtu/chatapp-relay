@@ -34,3 +34,8 @@ export async function sendMessageToChat(chatId, content, clientId) {
   const path = `/api/chats/${encodeURIComponent(chatId)}/messages`;
   return postJson(path, { content, clientId });
 }
+
+export async function markChatRead(chatId, lastReadMessageId) {
+  const path = `/api/chats/${encodeURIComponent(chatId)}/read`;
+  return postJson(path, { lastReadMessageId });
+}
