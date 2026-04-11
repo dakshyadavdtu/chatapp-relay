@@ -20,6 +20,7 @@ export function createMemoryStorage() {
   const chats = new Map();
   const messagesByChatId = new Map();
   const messagesById = new Map();
+  const readCursorByUserChat = new Map();
 
   function ensureChat(chat) {
     const c = normalizeChat(chat);
@@ -125,6 +126,45 @@ export function createMemoryStorage() {
         }
         const slice = filtered.slice(-limit);
         return slice;
+      },
+      async listAllByChatId(chatId) {
+        const list = messagesByChatId.get(chatId) ?? [];
+        return [...list];
+      },
+    },
+    reads: {
+      async getCursor(userId, chatId) {
+        if (!userId || !chatId) {
+          return null;
+        }
+        const key = `${String(userId)}::${String(chatId)}`;
+        return readCursorByUserChat.get(key) ?? null;
+      },
+      async setCursor(userId, chatId, cursor) {
+        const key = `${String(userId)}::${String(chatId)}`;
+        const next = {
+          userId: String(userId),
+          chatId: String(chatId),
+          lastReadMessageId: cursor?.lastReadMessageId ?? null,
+          lastReadAt: Number.isFinite(cursor?.lastReadAt) ? cursor.lastReadAt : Date.now(),
+          updatedAt: Date.now(),
+        };
+        readCursorByUserChat.set(key, next);
+        return next;
+      },
+      async bulkGetByUser(userId, chatIds) {
+        const out = Object.create(null);
+        if (!Array.isArray(chatIds)) {
+          return out;
+        }
+        for (const chatId of chatIds) {
+          const key = `${String(userId)}::${String(chatId)}`;
+          const row = readCursorByUserChat.get(key);
+          if (row) {
+            out[String(chatId)] = row;
+          }
+        }
+        return out;
       },
     },
     rooms: {

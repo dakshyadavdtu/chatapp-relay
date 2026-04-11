@@ -12,6 +12,7 @@ import { handleApiChatMessagesList } from './handlers/chats/listMessages.js';
 import { handleApiChatOpen } from './handlers/chats/openChat.js';
 import { handleApiChatSend } from './handlers/chats/sendMessage.js';
 import { handleApiChatSendToChat } from './handlers/chats/sendMessageToChat.js';
+import { handleApiChatMarkRead } from './handlers/chats/markRead.js';
 
 any('/', handleHealth);
 any('/health', handleHealth);
@@ -27,6 +28,7 @@ route(['GET', 'HEAD'], '/api/chats/:chatId', handleApiChatGet);
 route(['GET', 'HEAD'], '/api/chats/:chatId/open', handleApiChatOpen);
 route(['GET', 'HEAD'], '/api/chats/:chatId/messages', handleApiChatMessagesList);
 route(['POST'], '/api/chats/:chatId/messages', handleApiChatSendToChat);
+route(['POST'], '/api/chats/:chatId/read', handleApiChatMarkRead);
 route(['POST'], '/api/chat/send', handleApiChatSend);
 
 export { match } from './router.js';

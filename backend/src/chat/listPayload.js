@@ -1,16 +1,16 @@
-export function chatListPayload(chats, userId) {
+export function chatListPayload(chats, userId, unreadByChat = Object.create(null)) {
   return {
-    chats: chats.map((c) => chatRowPayload(c, userId)),
+    chats: chats.map((c) => chatRowPayload(c, userId, unreadByChat[c.id] ?? 0)),
   };
 }
 
-export function chatRowPayload(chat, userId) {
+export function chatRowPayload(chat, userId, unreadCount = 0) {
   return {
     chatId: chat.id,
     type: chat.kind,
     title: chat.title ?? null,
     participants: (Array.isArray(chat.members) ? chat.members : []).filter((id) => id !== userId),
-    unreadCount: 0,
+    unreadCount: Number.isFinite(unreadCount) ? Math.max(0, unreadCount) : 0,
     updatedAt: chat.updatedAt ?? null,
     lastMessage: normalizeLastMessage(chat.lastMessage),
   };
