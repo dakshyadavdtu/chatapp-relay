@@ -23,6 +23,17 @@ function labelForChat(chat) {
   return chat.chatId ?? 'Chat';
 }
 
+function previewForChat(chat) {
+  const text = typeof chat?.lastMessage?.content === 'string' ? chat.lastMessage.content.trim() : '';
+  if (!text) {
+    return '';
+  }
+  if (text.length <= 60) {
+    return text;
+  }
+  return `${text.slice(0, 57)}...`;
+}
+
 function messageErrorText(code) {
   const map = {
     CHAT_NOT_FOUND: 'Chat not found.',
@@ -213,46 +224,60 @@ export async function renderChatPage(container) {
 
   const listEl = document.createElement('ul');
   listEl.className = 'chat-list';
-
-  if (chatState.loadStatus === 'loading') {
-    statusEl.textContent = 'Loading…';
-  } else if (chatState.loadStatus === 'error') {
-    const map = {
-      not_available: 'Chat list not available',
-      bad_response: 'Bad response from server',
-      fetch_failed: 'Could not load chat list',
-    };
-    statusEl.textContent = map[chatState.loadError] ?? 'Could not load chat list';
-  } else if (chatState.chats.length === 0) {
-    statusEl.textContent = 'No chats yet';
-  } else {
-    statusEl.textContent = '';
-  }
-
-  for (const chat of chatState.chats) {
-    const li = document.createElement('li');
-    li.className = 'chat-list-item';
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'chat-list-button';
-    btn.textContent = labelForChat(chat);
-    btn.dataset.chatId = chat.chatId;
-    if (chatState.activeChatId === chat.chatId) {
-      btn.setAttribute('aria-current', 'true');
+  async function renderSidebar() {
+    listEl.replaceChildren();
+    if (chatState.loadStatus === 'loading') {
+      statusEl.textContent = 'Loading…';
+      return;
     }
-    btn.addEventListener('click', async () => {
-      setActiveChatId(chat.chatId);
-      input.value = '';
-      sendHint.textContent = '';
-      sendBtn.disabled = true;
-      listEl.querySelectorAll('.chat-list-button').forEach((b) => b.removeAttribute('aria-current'));
-      btn.setAttribute('aria-current', 'true');
-      await openActiveChat(chat.chatId);
-      await renderMessagesArea();
-    });
-    li.append(btn);
-    listEl.append(li);
+    if (chatState.loadStatus === 'error') {
+      const map = {
+        not_available: 'Chat list not available',
+        bad_response: 'Bad response from server',
+        fetch_failed: 'Could not load chat list',
+      };
+      statusEl.textContent = map[chatState.loadError] ?? 'Could not load chat list';
+      return;
+    }
+    if (chatState.chats.length === 0) {
+      statusEl.textContent = 'No chats yet';
+      return;
+    }
+    statusEl.textContent = '';
+    for (const chat of chatState.chats) {
+      const li = document.createElement('li');
+      li.className = 'chat-list-item';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chat-list-button';
+      const unread = Number.isFinite(chat?.unreadCount) ? chat.unreadCount : 0;
+      btn.textContent = unread > 0 ? `${labelForChat(chat)} (${unread})` : labelForChat(chat);
+      btn.dataset.chatId = chat.chatId;
+      if (chatState.activeChatId === chat.chatId) {
+        btn.setAttribute('aria-current', 'true');
+      }
+      btn.addEventListener('click', async () => {
+        setActiveChatId(chat.chatId);
+        input.value = '';
+        sendHint.textContent = '';
+        sendBtn.disabled = true;
+        await renderSidebar();
+        await openActiveChat(chat.chatId);
+        await renderSidebar();
+        await renderMessagesArea();
+      });
+      li.append(btn);
+      const preview = previewForChat(chat);
+      if (preview) {
+        const previewEl = document.createElement('p');
+        previewEl.className = 'chat-list-preview';
+        previewEl.textContent = preview;
+        li.append(previewEl);
+      }
+      listEl.append(li);
+    }
   }
+  await renderSidebar();
 
   sidebar.append(sideTitle, statusEl, listEl);
 
@@ -278,6 +303,7 @@ export async function renderChatPage(container) {
     input.disabled = false;
     sendBtn.disabled = !getActiveRecipientId();
     await refreshActiveChat();
+    await renderSidebar();
     await renderMessagesArea();
   });
 
@@ -285,6 +311,7 @@ export async function renderChatPage(container) {
   await renderMessagesArea();
 
   const onRemoteMessages = (updatedChatId) => {
+    void renderSidebar();
     if (updatedChatId !== chatState.activeChatId) {
       return;
     }
