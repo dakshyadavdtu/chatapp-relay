@@ -184,6 +184,45 @@ test('GET /api/chats/:chatId/messages 404 when chat missing', async () => {
   assert.equal(body.code, 'CHAT_NOT_FOUND');
 });
 
+test('POST /api/chats/:chatId/read accepts latest message id', async () => {
+  const handler = createHttpHandler();
+  const sendReq = makeJsonPost('/api/chats/direct%3Au1%3Au2/messages', {
+    content: 'mark read contract',
+    clientId: 'tmp_read_route',
+  });
+  const sendRes = makeRes();
+  await handler(sendReq, sendRes);
+  assert.equal(sendRes.statusCode, 201);
+  const sentBody = JSON.parse(sendRes.body);
+  const lastReadMessageId = sentBody.data?.message?.id;
+  assert.ok(lastReadMessageId);
+
+  const readReq = makeJsonPost('/api/chats/direct%3Au1%3Au2/read', { lastReadMessageId });
+  const readRes = makeRes();
+  await handler(readReq, readRes);
+
+  assert.equal(readRes.statusCode, 200);
+  const body = JSON.parse(readRes.body);
+  assert.equal(body.success, true);
+  assert.equal(body.data?.chatId, 'direct:u1:u2');
+  assert.equal(body.data?.lastReadMessageId, lastReadMessageId);
+  assert.equal(body.data?.unreadCount, 0);
+});
+
+test('POST /api/chats/:chatId/read rejects unknown message id', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/chats/direct%3Au1%3Au2/read', {
+    lastReadMessageId: 'missing-read-message',
+  });
+  const res = makeRes();
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 404);
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, false);
+  assert.equal(body.code, 'READ_MESSAGE_NOT_FOUND');
+});
+
 test('POST /api/login rejects missing fields', async () => {
   const handler = createHttpHandler();
   const req = makeJsonPost('/api/login', {});

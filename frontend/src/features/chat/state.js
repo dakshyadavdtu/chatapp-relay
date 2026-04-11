@@ -249,7 +249,7 @@ export function applyIncomingMessage(raw) {
   };
   const items = Array.isArray(prev.items) ? prev.items : [];
   const existIdx = findMessageIndex(items, row);
-  
+
   let nextItems;
   if (existIdx >= 0) {
     const merged = { ...items[existIdx], ...row };
@@ -261,7 +261,7 @@ export function applyIncomingMessage(raw) {
   } else {
     nextItems = [...items, row];
   }
-  
+
   chatState.messagesByChat[chatId] = {
     ...prev,
     items: sortMessagesOldestFirst(nextItems),
@@ -609,7 +609,7 @@ export async function sendActiveMessage(content) {
   }
   chatState.sendStatus = 'sending';
   chatState.sendError = null;
-  
+
   const clientId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   applyIncomingMessage({
     clientId,

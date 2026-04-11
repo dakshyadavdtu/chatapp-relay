@@ -184,6 +184,41 @@ test('openChatBody returns chat and messages', async () => {
   assert.equal(res.data.messages[res.data.messages.length - 1].recipientId, 'u2');
 });
 
+test('chatListBody unread clears after markReadBody', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const sent = await chat.sendMessageToChat('u2', 'direct:u1:u2', {
+    content: 'new for u1',
+    clientId: 'tmp_unread_1',
+  });
+  assert.equal(sent.ok, true);
+
+  const before = await chat.chatListBody('u1');
+  const rowBefore = before.chats.find((row) => row.chatId === 'direct:u1:u2');
+  assert.equal(rowBefore?.unreadCount, 1);
+
+  const readRes = await chat.markReadBody('u1', 'direct:u1:u2', {
+    lastReadMessageId: sent.data.message.id,
+  });
+  assert.equal(readRes.ok, true);
+  assert.equal(readRes.data.unreadCount, 0);
+
+  const after = await chat.chatListBody('u1');
+  const rowAfter = after.chats.find((row) => row.chatId === 'direct:u1:u2');
+  assert.equal(rowAfter?.unreadCount, 0);
+});
+
+test('markReadBody rejects unknown message id', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const out = await chat.markReadBody('u1', 'direct:u1:u2', {
+    lastReadMessageId: 'missing-message-id',
+  });
+  assert.equal(out.ok, false);
+  assert.equal(out.status, 404);
+  assert.equal(out.code, 'READ_MESSAGE_NOT_FOUND');
+});
+
 test('messageListBody returns clientId and state from sent message', async () => {
   const storage = createStorage();
   const chat = createChatService(storage);
