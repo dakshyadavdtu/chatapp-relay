@@ -121,6 +121,22 @@ function upsertChatSummaryFromMessage(row, opts = {}) {
   ]);
 }
 
+function setChatUnreadCount(chatId, unreadCount) {
+  if (!chatId) {
+    return;
+  }
+  const idx = chatState.chats.findIndex((chat) => chat.chatId === chatId);
+  if (idx < 0) {
+    return;
+  }
+  const chats = [...chatState.chats];
+  chats[idx] = {
+    ...chats[idx],
+    unreadCount: Math.max(0, Number.isFinite(unreadCount) ? unreadCount : 0),
+  };
+  chatState.chats = chats;
+}
+
 export function applyIncomingMessage(raw) {
   const chatId = raw?.chatId;
   if (!chatId) {
@@ -184,6 +200,7 @@ export function setActiveChatId(chatId) {
     chatState.activeChatError = null;
   }
   chatState.activeChatId = chatId;
+  setChatUnreadCount(chatId, 0);
   chatState.sendStatus = 'idle';
   chatState.sendError = null;
 }
@@ -228,7 +245,12 @@ export async function loadChats() {
       chatState.loadError = 'bad_response';
       return;
     }
-    chatState.chats = r.data.chats;
+    chatState.chats = sortChatsNewestFirst(
+      r.data.chats.map((chat) => ({
+        ...chat,
+        unreadCount: Number.isFinite(chat?.unreadCount) ? chat.unreadCount : 0,
+      })),
+    );
     chatState.loadStatus = 'ok';
     if (
       chatState.activeChatId &&
@@ -241,6 +263,9 @@ export async function loadChats() {
     }
     if (!chatState.activeChatId && chatState.chats.length > 0) {
       setActiveChatId(chatState.chats[0].chatId);
+    }
+    if (chatState.activeChatId) {
+      setChatUnreadCount(chatState.activeChatId, 0);
     }
   } catch (e) {
     chatState.chats = [];
@@ -358,6 +383,7 @@ export async function openActiveChat(chatId) {
     }
     chatState.activeChat = r.data.chat;
     chatState.activeChatStatus = 'ok';
+    setChatUnreadCount(chatId, 0);
     const items = Array.isArray(r.data.messages)
       ? normalizeMessageListForChat(r.data.messages, chatId, chatState.messagesByChat[chatId].items)
       : [];
