@@ -111,9 +111,17 @@ export function startJsonSocket({ onJson, onStatus, onAuthClose }) {
 
     socket.addEventListener('message', onMessage);
     socket.addEventListener('open', () => {
+      const recovered = reconnectAttempt > 0;
       reconnectAttempt = 0;
       emitStatus('open');
-      setConnectionStatus('connected', { reconnectAttempt: 0, nextRetryMs: null });
+      setConnectionStatus('connected', {
+        reconnectAttempt: 0,
+        nextRetryMs: null,
+        recoveredAt: recovered ? Date.now() : null,
+        closeCode: null,
+        closeReason: '',
+        wasClean: true,
+      });
     });
     socket.addEventListener('close', (ev) => {
       socket.removeEventListener('message', onMessage);

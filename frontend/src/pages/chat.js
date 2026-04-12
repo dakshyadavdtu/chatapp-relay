@@ -80,14 +80,29 @@ function formatTime(ts) {
 let lastMessageUnsub = null;
 let lastConnectionUnsub = null;
 
-function socketStateText(status) {
-  const map = {
-    connected: 'Socket: connected',
-    connecting: 'Socket: connecting…',
-    reconnecting: 'Socket: reconnecting…',
-    disconnected: 'Socket: disconnected',
-  };
-  return map[status] ?? 'Socket: disconnected';
+function socketStateText(state) {
+  const status = state?.status ?? 'disconnected';
+  if (status === 'connected') {
+    return state?.recoveredAt ? 'Socket: connected (recovered)' : 'Socket: connected';
+  }
+  if (status === 'connecting') {
+    return 'Socket: connecting…';
+  }
+  if (status === 'reconnecting') {
+    const attempt = Number.isFinite(state?.reconnectAttempt) ? state.reconnectAttempt : 0;
+    const nextRetryMs = Number.isFinite(state?.nextRetryMs) ? state.nextRetryMs : null;
+    if (nextRetryMs !== null) {
+      return `Socket: reconnecting (attempt ${attempt}, retry in ${Math.ceil(nextRetryMs / 1000)}s)`;
+    }
+    return `Socket: reconnecting (attempt ${attempt})`;
+  }
+  if (status === 'reconnect_failed') {
+    return 'Socket: reconnect failed';
+  }
+  if (status === 'auth_failed') {
+    return 'Socket: auth expired, sign in again';
+  }
+  return 'Socket: disconnected';
 }
 
 export async function renderChatPage(container) {
@@ -121,7 +136,7 @@ export async function renderChatPage(container) {
   const connectionHint = document.createElement('p');
   connectionHint.className = 'chat-connection-state';
   const setConnectionHint = () => {
-    connectionHint.textContent = socketStateText(getConnectionState().status);
+    connectionHint.textContent = socketStateText(getConnectionState());
   };
   setConnectionHint();
   composer.append(input, sendBtn);
