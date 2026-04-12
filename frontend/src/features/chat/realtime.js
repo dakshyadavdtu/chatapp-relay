@@ -1,6 +1,8 @@
 import { applyIncomingMessage, loadChats, refreshActiveChat } from './state.js';
 import { startJsonSocket } from '../../transport/ws.js';
 import { subscribeConnection } from '../../transport/connectionState.js';
+import { setAuthUser } from '../auth/state.js';
+import { navigate } from '../../app/router.js';
 
 let session = null;
 let unsubConn = null;
@@ -65,6 +67,11 @@ export function startChatRealtime() {
       if (fn) {
         fn(msg);
       }
+    },
+    onAuthClose() {
+      stopChatRealtime();
+      setAuthUser(null);
+      navigate('/');
     },
   });
 }

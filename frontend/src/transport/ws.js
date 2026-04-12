@@ -9,8 +9,26 @@ const BASE_RECONNECT_MS = 1000;
 const MAX_RECONNECT_MS = 30000;
 const MAX_RECONNECT_ATTEMPTS = 8;
 const RECONNECT_JITTER_MS = 250;
+const AUTH_CLOSE_CODES = new Set([1008, 4001, 4003, 4005, 4401, 4403]);
 
-export function startJsonSocket({ onJson, onStatus }) {
+function isAuthCloseEvent(ev) {
+  const code = Number.isFinite(ev?.code) ? ev.code : null;
+  if (code && AUTH_CLOSE_CODES.has(code)) {
+    return true;
+  }
+  const reason = typeof ev?.reason === 'string' ? ev.reason.toLowerCase() : '';
+  if (!reason) {
+    return false;
+  }
+  return (
+    reason.includes('auth') ||
+    reason.includes('unauthorized') ||
+    reason.includes('session') ||
+    reason.includes('logout')
+  );
+}
+
+export function startJsonSocket({ onJson, onStatus, onAuthClose }) {
   let ws = null;
   let reconnectTimer = null;
   let stopped = false;
@@ -101,6 +119,23 @@ export function startJsonSocket({ onJson, onStatus }) {
       socket.removeEventListener('message', onMessage);
       if (ws === socket) {
         ws = null;
+      }
+      if (!stopped && isAuthCloseEvent(ev)) {
+        stopped = true;
+        clearReconnectTimer();
+        emitStatus('closed');
+        const payload = {
+          reconnectAttempt,
+          nextRetryMs: null,
+          closeCode: Number.isFinite(ev?.code) ? ev.code : null,
+          closeReason: typeof ev?.reason === 'string' ? ev.reason : '',
+          wasClean: Boolean(ev?.wasClean),
+        };
+        setConnectionStatus('auth_failed', payload);
+        if (typeof onAuthClose === 'function') {
+          onAuthClose(payload);
+        }
+        return;
       }
       emitStatus('closed');
       setConnectionStatus('disconnected', {
