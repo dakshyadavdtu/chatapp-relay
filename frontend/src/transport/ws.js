@@ -1,5 +1,6 @@
 import { wsUrl } from '../config/ws.js';
 import { setConnectionStatus } from './connectionState.js';
+import { isAuthCloseCode } from './wsCodes.js';
 
 export function getWebSocketUrl() {
   return wsUrl();
@@ -9,11 +10,9 @@ const BASE_RECONNECT_MS = 1000;
 const MAX_RECONNECT_MS = 30000;
 const MAX_RECONNECT_ATTEMPTS = 8;
 const RECONNECT_JITTER_MS = 250;
-const AUTH_CLOSE_CODES = new Set([1008, 4001, 4003, 4005, 4401, 4403]);
-
 function isAuthCloseEvent(ev) {
   const code = Number.isFinite(ev?.code) ? ev.code : null;
-  if (code && AUTH_CLOSE_CODES.has(code)) {
+  if (isAuthCloseCode(code)) {
     return true;
   }
   const reason = typeof ev?.reason === 'string' ? ev.reason.toLowerCase() : '';

@@ -4,6 +4,7 @@ import { onConnectionClose, onConnectionOpen } from './presence.js';
 import { registerUserConnection, removeUserConnection } from './connections.js';
 import { getSession } from '../auth/session.js';
 import { getCookie } from '../auth/cookies.js';
+import { WS_CLOSE_UNAUTHORIZED } from './constants.js';
 
 function sendJson(ws, payload) {
   if (ws.readyState === 1) {
@@ -34,7 +35,7 @@ export function handleConnection(ws, req, hooks = {}) {
       }
       const sid = getCookie(req, 'sid');
       if (sid && !session) {
-        ws.close(4401, 'unauthorized');
+        ws.close(WS_CLOSE_UNAUTHORIZED, 'unauthorized');
         return;
       }
       const userId = session?.user?.id ?? 'u1';

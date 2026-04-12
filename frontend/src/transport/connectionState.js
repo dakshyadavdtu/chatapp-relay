@@ -1,6 +1,11 @@
 let state = {
   status: 'disconnected',
   reconnectAttempt: 0,
+  nextRetryMs: null,
+  closeCode: null,
+  closeReason: '',
+  wasClean: false,
+  recoveredAt: null,
 };
 
 const listeners = new Set();

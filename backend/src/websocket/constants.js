@@ -1,0 +1,1 @@
+export const WS_CLOSE_UNAUTHORIZED = 4401;
