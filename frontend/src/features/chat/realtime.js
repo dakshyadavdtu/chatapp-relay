@@ -1,4 +1,10 @@
-import { applyIncomingMessage, loadChats, refreshActiveChat } from './state.js';
+import {
+  applyIncomingMessage,
+  chatState,
+  loadChats,
+  openActiveChat,
+  setActiveChatId,
+} from './state.js';
 import { startJsonSocket } from '../../transport/ws.js';
 import { subscribeConnection } from '../../transport/connectionState.js';
 import { setAuthUser } from '../auth/state.js';
@@ -7,6 +13,7 @@ import { navigate } from '../../app/router.js';
 let session = null;
 let unsubConn = null;
 let lastStatus = 'disconnected';
+let reconnectSyncId = 0;
 
 export function toIncomingChatMessage(msg) {
   if (!msg || typeof msg !== 'object') {
@@ -52,10 +59,36 @@ export function startChatRealtime() {
     return;
   }
 
+  async function restoreAfterReconnect() {
+    const syncId = ++reconnectSyncId;
+    const activeBefore = chatState.activeChatId;
+    await loadChats();
+    if (syncId !== reconnectSyncId) {
+      return;
+    }
+    const activeExists = activeBefore
+      ? chatState.chats.some((chat) => chat.chatId === activeBefore)
+      : false;
+    if (activeExists) {
+      if (chatState.activeChatId !== activeBefore) {
+        setActiveChatId(activeBefore);
+      }
+      await openActiveChat(activeBefore);
+      return;
+    }
+    if (chatState.activeChatId) {
+      await openActiveChat(chatState.activeChatId);
+    }
+  }
+
   unsubConn = subscribeConnection((st) => {
-    if (st.status === 'connected' && lastStatus !== 'connected') {
-      void loadChats();
-      void refreshActiveChat();
+    const justRecovered =
+      st.status === 'connected' &&
+      lastStatus !== 'connected' &&
+      Number.isFinite(st.reconnectAttempt) &&
+      st.reconnectAttempt > 0;
+    if (justRecovered) {
+      void restoreAfterReconnect();
     }
     lastStatus = st.status;
   });
