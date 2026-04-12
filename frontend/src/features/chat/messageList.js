@@ -6,6 +6,18 @@ export function messageKey(m) {
   return k != null && k !== '' ? String(k) : '';
 }
 
+function stateRank(state) {
+  const order = {
+    ERROR: 0,
+    PENDING: 1,
+    SENT: 2,
+    DELIVERED: 3,
+    READ: 4,
+  };
+  const key = typeof state === 'string' ? state.toUpperCase() : '';
+  return order[key] ?? -1;
+}
+
 export function normalizeChatMessage(raw, chatId) {
   const id = messageKey(raw);
   if (!id) {
@@ -62,9 +74,21 @@ export function normalizeMessageListForChat(rawList, chatId, existingItems = [])
     const existIdx = findMessageIndex(out, row);
 
     if (existIdx >= 0) {
-      const merged = { ...out[existIdx], ...row };
-      if (out[existIdx].clientId && !row.clientId) {
-        merged.clientId = out[existIdx].clientId;
+      const existing = out[existIdx];
+      const merged = { ...existing, ...row };
+      if (existing.clientId && !row.clientId) {
+        merged.clientId = existing.clientId;
+      }
+      if (typeof existing.content === 'string' && existing.content && !merged.content) {
+        merged.content = existing.content;
+      }
+      if (stateRank(existing.state) > stateRank(merged.state)) {
+        merged.state = existing.state;
+      }
+      const prevCreated = Number.isFinite(existing.createdAt) ? existing.createdAt : null;
+      const nextCreated = Number.isFinite(merged.createdAt) ? merged.createdAt : null;
+      if (prevCreated !== null && (nextCreated === null || nextCreated < prevCreated)) {
+        merged.createdAt = prevCreated;
       }
       out[existIdx] = merged;
     } else {
