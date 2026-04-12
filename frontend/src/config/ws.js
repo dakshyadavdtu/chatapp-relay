@@ -1,5 +1,5 @@
 export function wsUrl() {
-  const raw = import.meta.env.VITE_WS_URL;
+  const raw = import.meta?.env?.VITE_WS_URL;
   if (raw) {
     return raw.replace(/\/$/, '');
   }
