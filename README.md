@@ -6,7 +6,7 @@ Relay is a chat app built in the open: Node for the HTTP and WebSocket server, V
 
 There are early HTTP routes, a Vite client that calls `/api` (proxied in dev) with hash routes (`#/`, `#/chat`), and a WebSocket the chat UI uses when you’re signed in for new messages. The dev client does not proxy WebSocket traffic like `/api`; it defaults to `ws://localhost:3000` unless you set `VITE_WS_URL` in `frontend/.env`. Storage is in-memory for now, not a real database yet.
 
-The chat page shows per-chat loading and error states, keeps messages sorted oldest-first, disables the composer while sending, refreshes the active thread after you send, and updates chat-list unread badges and previews as messages arrive.
+The chat page shows per-chat loading and error states, keeps messages sorted oldest-first, disables the composer while sending, refreshes the active thread after you send, and updates chat-list unread badges and previews as messages arrive. Reconnect retries are capped, auth-related socket closes stop retry, and reconnect recovery re-syncs the active chat.
 
 ## Project structure
 
