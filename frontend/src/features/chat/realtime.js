@@ -1,9 +1,6 @@
 import {
   applyIncomingMessage,
-  chatState,
-  loadChats,
-  openActiveChat,
-  setActiveChatId,
+  recoverAfterReconnect,
 } from './state.js';
 import { startJsonSocket } from '../../transport/ws.js';
 import { subscribeConnection } from '../../transport/connectionState.js';
@@ -61,23 +58,9 @@ export function startChatRealtime() {
 
   async function restoreAfterReconnect() {
     const syncId = ++reconnectSyncId;
-    const activeBefore = chatState.activeChatId;
-    await loadChats();
+    await recoverAfterReconnect();
     if (syncId !== reconnectSyncId) {
       return;
-    }
-    const activeExists = activeBefore
-      ? chatState.chats.some((chat) => chat.chatId === activeBefore)
-      : false;
-    if (activeExists) {
-      if (chatState.activeChatId !== activeBefore) {
-        setActiveChatId(activeBefore);
-      }
-      await openActiveChat(activeBefore);
-      return;
-    }
-    if (chatState.activeChatId) {
-      await openActiveChat(chatState.activeChatId);
     }
   }
 

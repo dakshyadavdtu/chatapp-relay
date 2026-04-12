@@ -594,6 +594,26 @@ export async function refreshActiveChat() {
   await openActiveChat(chatId);
 }
 
+export async function recoverAfterReconnect() {
+  const activeBefore = chatState.activeChatId;
+  await loadChats();
+  const activeExists = activeBefore
+    ? chatState.chats.some((chat) => chat.chatId === activeBefore)
+    : false;
+  if (activeExists) {
+    if (chatState.activeChatId !== activeBefore) {
+      setActiveChatId(activeBefore);
+    }
+    await openActiveChat(activeBefore);
+    return { ok: true, chatId: activeBefore };
+  }
+  if (chatState.activeChatId) {
+    await openActiveChat(chatState.activeChatId);
+    return { ok: true, chatId: chatState.activeChatId };
+  }
+  return { ok: true, chatId: null };
+}
+
 export async function sendActiveMessage(content) {
   const chatId = chatState.activeChatId;
   if (!chatId) {
