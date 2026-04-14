@@ -76,7 +76,7 @@ export function createChatService(storage) {
     if (typeof value !== 'string') {
       return '';
     }
-    return value.trim().toLowerCase();
+    return value.trim();
   };
 
   const chatSearchText = (chat, row) => {
@@ -253,6 +253,7 @@ export function createChatService(storage) {
       if (!q) {
         return { ok: true, data: { query: '', results: [] } };
       }
+      const qLower = q.toLowerCase();
       const rows = await storage.chats.listForUser(userId);
       const unreadByChat = await unreadMapForChats(rows, userId);
       const chatRows = rows.map((chat) => chatRowPayload(chat, userId, unreadByChat[chat.id] ?? 0));
@@ -265,48 +266,56 @@ export function createChatService(storage) {
           continue;
         }
         const text = chatSearchText(source, row);
-        if (!text.includes(q)) {
+        if (!text.includes(qLower)) {
           continue;
         }
         matchedChats.push({
+          id: `chat:${row.chatId}`,
           type: 'chat',
           chatId: row.chatId,
+          messageId: null,
           title: row.title,
           participants: row.participants,
           unreadCount: row.unreadCount,
           updatedAt: row.updatedAt,
+          createdAt: null,
           preview: row.lastMessage?.content ?? '',
-          messageId: null,
-          messageCreatedAt: null,
-          messageContent: null,
         });
       }
 
       const matchedMessages = [];
+      const seenMessageIds = new Set();
       for (const row of chatRows) {
         const list = await listAllMessagesForChat(row.chatId);
         for (const msg of list) {
           const content = typeof msg?.body === 'string' ? msg.body : '';
-          if (!content || !content.toLowerCase().includes(q)) {
+          if (!content || !content.toLowerCase().includes(qLower)) {
             continue;
           }
+          const messageId = msg?.id ?? null;
+          if (messageId && seenMessageIds.has(messageId)) {
+            continue;
+          }
+          if (messageId) {
+            seenMessageIds.add(messageId);
+          }
           matchedMessages.push({
+            id: messageId ? `message:${messageId}` : `message:${row.chatId}:${msg?.createdAt ?? 0}`,
             type: 'message',
             chatId: row.chatId,
+            messageId,
             title: row.title,
             participants: row.participants,
             unreadCount: row.unreadCount,
             updatedAt: row.updatedAt,
+            createdAt: Number.isFinite(msg?.createdAt) ? msg.createdAt : null,
             preview: content,
-            messageId: msg.id ?? null,
-            messageCreatedAt: Number.isFinite(msg?.createdAt) ? msg.createdAt : null,
-            messageContent: content,
           });
         }
       }
 
       matchedChats.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
-      matchedMessages.sort((a, b) => (b.messageCreatedAt ?? 0) - (a.messageCreatedAt ?? 0));
+      matchedMessages.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
 
       const results = [...matchedChats, ...matchedMessages].slice(0, MAX_SEARCH_RESULTS);
       return {

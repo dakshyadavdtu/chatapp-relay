@@ -367,6 +367,52 @@ export function clearSearchState() {
   chatState.searchResults = [];
 }
 
+function normalizeSearchResult(raw) {
+  if (!raw || typeof raw !== 'object') {
+    return null;
+  }
+  const type = raw.type === 'message' ? 'message' : raw.type === 'chat' ? 'chat' : null;
+  const chatId = typeof raw.chatId === 'string' ? raw.chatId : '';
+  if (!type || !chatId) {
+    return null;
+  }
+  const participants = Array.isArray(raw.participants)
+    ? raw.participants.filter((id) => typeof id === 'string' && id.trim())
+    : [];
+  return {
+    id:
+      typeof raw.id === 'string' && raw.id.trim()
+        ? raw.id
+        : `${type}:${chatId}:${raw.messageId ?? ''}`,
+    type,
+    chatId,
+    messageId: typeof raw.messageId === 'string' ? raw.messageId : null,
+    title: typeof raw.title === 'string' ? raw.title : null,
+    participants,
+    unreadCount: Number.isFinite(raw.unreadCount) ? Math.max(0, raw.unreadCount) : 0,
+    preview: typeof raw.preview === 'string' ? raw.preview : '',
+    updatedAt: Number.isFinite(raw.updatedAt) ? raw.updatedAt : null,
+    createdAt: Number.isFinite(raw.createdAt) ? raw.createdAt : null,
+  };
+}
+
+function normalizeSearchResults(raw) {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const out = [];
+  const seen = new Set();
+  for (const item of raw) {
+    const normalized = normalizeSearchResult(item);
+    if (!normalized || seen.has(normalized.id)) {
+      continue;
+    }
+    seen.add(normalized.id);
+    out.push(normalized);
+  }
+  return out;
+}
+
 export async function searchChatDiscovery(query) {
   const q = typeof query === 'string' ? query.trim() : '';
   chatState.searchQuery = typeof query === 'string' ? query : '';
@@ -386,10 +432,11 @@ export async function searchChatDiscovery(query) {
       chatState.searchResults = [];
       return { ok: false, code: 'bad_response' };
     }
+    const normalized = normalizeSearchResults(out.data.results);
     chatState.searchStatus = 'ok';
     chatState.searchError = null;
-    chatState.searchResults = out.data.results;
-    return { ok: true, data: out.data.results };
+    chatState.searchResults = normalized;
+    return { ok: true, data: normalized };
   } catch (e) {
     chatState.searchStatus = 'error';
     chatState.searchError = e?.code ?? 'search_failed';
