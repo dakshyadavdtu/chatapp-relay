@@ -171,6 +171,7 @@ export async function renderChatPage(container) {
   };
   setConnectionHint();
   composer.append(input, sendBtn);
+  let pendingFocusMessageId = null;
 
   async function renderMessagesArea() {
     const chatId = chatState.activeChatId;
@@ -257,6 +258,17 @@ export async function renderChatPage(container) {
       ul.append(li);
     }
     messageWrap.append(ul);
+    if (pendingFocusMessageId) {
+      const node = ul.querySelector(`[data-message-id=\"${pendingFocusMessageId}\"]`);
+      if (node) {
+        node.scrollIntoView({ block: 'center' });
+        node.style.background = '#fff7d1';
+        window.setTimeout(() => {
+          node.style.background = '';
+        }, 700);
+      }
+      pendingFocusMessageId = null;
+    }
   }
 
   const sidebar = document.createElement('aside');
@@ -285,6 +297,20 @@ export async function renderChatPage(container) {
 
   const listEl = document.createElement('ul');
   listEl.className = 'chat-list';
+  const openChatFromSelection = async (chatId, messageId = null) => {
+    if (!chatId || typeof chatId !== 'string') {
+      return;
+    }
+    setActiveChatId(chatId);
+    pendingFocusMessageId = typeof messageId === 'string' && messageId.trim() ? messageId : null;
+    input.value = '';
+    sendHint.textContent = '';
+    sendBtn.disabled = true;
+    await renderSidebar();
+    await openActiveChat(chatId);
+    await renderSidebar();
+    await renderMessagesArea();
+  };
   async function renderSidebar() {
     searchInput.value = chatState.searchQuery;
     const hasSearchQuery = Boolean(chatState.searchQuery.trim());
@@ -309,7 +335,9 @@ export async function renderChatPage(container) {
         const baseLabel = chatLabelFromResult(result, chatState.chats);
         const isMessage = result?.type === 'message';
         btn.textContent = isMessage ? `Message in ${baseLabel}` : baseLabel;
-        btn.disabled = true;
+        btn.addEventListener('click', async () => {
+          await openChatFromSelection(result?.chatId, result?.messageId ?? null);
+        });
         li.append(btn);
         const preview = previewForSearchResult(result);
         if (preview) {
@@ -353,14 +381,7 @@ export async function renderChatPage(container) {
         btn.setAttribute('aria-current', 'true');
       }
       btn.addEventListener('click', async () => {
-        setActiveChatId(chat.chatId);
-        input.value = '';
-        sendHint.textContent = '';
-        sendBtn.disabled = true;
-        await renderSidebar();
-        await openActiveChat(chat.chatId);
-        await renderSidebar();
-        await renderMessagesArea();
+        await openChatFromSelection(chat.chatId);
       });
       li.append(btn);
       const preview = previewForChat(chat);
