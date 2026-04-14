@@ -6,7 +6,7 @@ Relay is a chat app built in the open: Node for the HTTP and WebSocket server, V
 
 There are early HTTP routes, a Vite client that calls `/api` (proxied in dev) with hash routes (`#/`, `#/chat`), and a WebSocket the chat UI uses when you’re signed in for new messages. The dev client does not proxy WebSocket traffic like `/api`; it defaults to `ws://localhost:3000` unless you set `VITE_WS_URL` in `frontend/.env`. Storage is in-memory for now, not a real database yet.
 
-The chat page shows per-chat loading and error states, keeps messages sorted oldest-first, disables the composer while sending, refreshes the active thread after you send, and updates chat-list unread badges and previews as messages arrive. Reconnect retries are capped, auth-related socket closes stop retry, and reconnect recovery re-syncs the active chat.
+The chat page shows per-chat loading and error states, keeps messages sorted oldest-first, disables the composer while sending, refreshes the active thread after you send, and updates chat-list unread badges and previews as messages arrive. Reconnect retries are capped, auth-related socket closes stop retry, and reconnect recovery re-syncs the active chat. Chat search can find matching chats and recent messages, then open the selected conversation from the result list.
 
 ## Project structure
 
@@ -30,7 +30,7 @@ npm install
 npm run dev
 npm test
 ```
-Chat API basics: `GET /api/chats` lists chats with unread counts, `GET /api/chats/:chatId/open` returns chat plus recent messages, `POST /api/chats/:chatId/messages` sends a message for that chat (also available as `/api/chat/send`), and `POST /api/chats/:chatId/read` stores the current read position.
+Chat API basics: `GET /api/chats` lists chats with unread counts, `GET /api/chats/search?q=...` returns chat/message discovery rows, `GET /api/chats/:chatId/open` returns chat plus recent messages, `POST /api/chats/:chatId/messages` sends a message for that chat (also available as `/api/chat/send`), and `POST /api/chats/:chatId/read` stores the current read position.
 
 **Frontend** — from `frontend/`:
 
