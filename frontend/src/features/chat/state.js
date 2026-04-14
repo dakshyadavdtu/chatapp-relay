@@ -4,6 +4,7 @@ import {
   listMessages,
   markChatRead,
   openChat,
+  searchChats,
   sendMessageToChat,
 } from '../../api/chat.js';
 import { authState } from '../auth/state.js';
@@ -30,11 +31,16 @@ export const chatState = {
   sendError: null,
   readStatusByChat: {},
   readErrorByChat: {},
+  searchQuery: '',
+  searchStatus: 'idle',
+  searchError: null,
+  searchResults: [],
 };
 
 const chatApi = {
   sendMessageToChat,
   markChatRead,
+  searchChats,
 };
 
 export function setChatApi(api) {
@@ -44,11 +50,15 @@ export function setChatApi(api) {
   if (api?.markChatRead) {
     chatApi.markChatRead = api.markChatRead;
   }
+  if (api?.searchChats) {
+    chatApi.searchChats = api.searchChats;
+  }
 }
 
 export function resetChatApi() {
   chatApi.sendMessageToChat = sendMessageToChat;
   chatApi.markChatRead = markChatRead;
+  chatApi.searchChats = searchChats;
 }
 
 const messageListeners = new Set();
@@ -333,8 +343,59 @@ export function resetChatState() {
   chatState.sendError = null;
   chatState.readStatusByChat = {};
   chatState.readErrorByChat = {};
+  chatState.searchQuery = '';
+  chatState.searchStatus = 'idle';
+  chatState.searchError = null;
+  chatState.searchResults = [];
   lastReadSyncByChat.clear();
   forcedReadByChat.clear();
+}
+
+export function setSearchQuery(query) {
+  chatState.searchQuery = typeof query === 'string' ? query : '';
+  if (!chatState.searchQuery.trim()) {
+    chatState.searchStatus = 'idle';
+    chatState.searchError = null;
+    chatState.searchResults = [];
+  }
+}
+
+export function clearSearchState() {
+  chatState.searchQuery = '';
+  chatState.searchStatus = 'idle';
+  chatState.searchError = null;
+  chatState.searchResults = [];
+}
+
+export async function searchChatDiscovery(query) {
+  const q = typeof query === 'string' ? query.trim() : '';
+  chatState.searchQuery = typeof query === 'string' ? query : '';
+  if (!q) {
+    chatState.searchStatus = 'idle';
+    chatState.searchError = null;
+    chatState.searchResults = [];
+    return { ok: true, data: [] };
+  }
+  chatState.searchStatus = 'loading';
+  chatState.searchError = null;
+  try {
+    const out = await chatApi.searchChats(q);
+    if (!out?.success || !Array.isArray(out?.data?.results)) {
+      chatState.searchStatus = 'error';
+      chatState.searchError = 'bad_response';
+      chatState.searchResults = [];
+      return { ok: false, code: 'bad_response' };
+    }
+    chatState.searchStatus = 'ok';
+    chatState.searchError = null;
+    chatState.searchResults = out.data.results;
+    return { ok: true, data: out.data.results };
+  } catch (e) {
+    chatState.searchStatus = 'error';
+    chatState.searchError = e?.code ?? 'search_failed';
+    chatState.searchResults = [];
+    return { ok: false, code: chatState.searchError };
+  }
 }
 
 export async function loadChats() {

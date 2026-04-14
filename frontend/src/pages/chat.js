@@ -9,6 +9,8 @@ import {
   openActiveChat,
   sendActiveMessage,
   refreshActiveChat,
+  searchChatDiscovery,
+  setSearchQuery,
   setActiveChatId,
   subscribeChatMessages,
 } from '../features/chat/state.js';
@@ -234,12 +236,35 @@ export async function renderChatPage(container) {
   sideTitle.className = 'chat-sidebar-title';
   sideTitle.textContent = 'Chats';
 
+  const searchForm = document.createElement('form');
+  searchForm.className = 'chat-search-form';
+  const searchInput = document.createElement('input');
+  searchInput.className = 'chat-search-input';
+  searchInput.type = 'search';
+  searchInput.placeholder = 'Search chats';
+  searchInput.value = chatState.searchQuery;
+  const searchBtn = document.createElement('button');
+  searchBtn.className = 'chat-search-button';
+  searchBtn.type = 'submit';
+  searchBtn.textContent = 'Search';
+  searchForm.append(searchInput, searchBtn);
+  const searchHint = document.createElement('p');
+  searchHint.className = 'chat-search-hint';
+
   const statusEl = document.createElement('p');
   statusEl.className = 'chat-list-status';
 
   const listEl = document.createElement('ul');
   listEl.className = 'chat-list';
   async function renderSidebar() {
+    searchInput.value = chatState.searchQuery;
+    if (chatState.searchStatus === 'loading') {
+      searchHint.textContent = 'Searching…';
+    } else if (chatState.searchStatus === 'error') {
+      searchHint.textContent = 'Search failed.';
+    } else {
+      searchHint.textContent = '';
+    }
     listEl.replaceChildren();
     if (chatState.loadStatus === 'loading') {
       statusEl.textContent = 'Loading…';
@@ -293,8 +318,17 @@ export async function renderChatPage(container) {
     }
   }
   await renderSidebar();
+  searchInput.addEventListener('input', () => {
+    setSearchQuery(searchInput.value);
+    void renderSidebar();
+  });
+  searchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await searchChatDiscovery(searchInput.value);
+    await renderSidebar();
+  });
 
-  sidebar.append(sideTitle, statusEl, listEl);
+  sidebar.append(sideTitle, searchForm, searchHint, statusEl, listEl);
 
   composer.addEventListener('submit', async (e) => {
     e.preventDefault();

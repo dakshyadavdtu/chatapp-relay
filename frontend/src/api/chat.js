@@ -39,3 +39,12 @@ export async function markChatRead(chatId, lastReadMessageId) {
   const path = `/api/chats/${encodeURIComponent(chatId)}/read`;
   return postJson(path, { lastReadMessageId });
 }
+
+export async function searchChats(query) {
+  const q = typeof query === 'string' ? query.trim() : '';
+  if (!q) {
+    return { success: true, data: { query: '', results: [] } };
+  }
+  const path = `/api/chats/search?q=${encodeURIComponent(q)}`;
+  return getJson(path);
+}
