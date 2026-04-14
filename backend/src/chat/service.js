@@ -5,6 +5,7 @@ import { chatListPayload, chatRowPayload } from './listPayload.js';
 import { messageListPayload, parseMessageListQuery } from './messageListPayload.js';
 
 const MAX_MESSAGE_CONTENT_LENGTH = 2000;
+const MAX_SEARCH_RESULTS = 25;
 
 export function createChatService(storage) {
   if (!storage || typeof storage !== 'object') {
@@ -69,6 +70,33 @@ export function createChatService(storage) {
       out[chat.id] = unreadCount;
     }
     return out;
+  };
+
+  const normalizeSearchQuery = (value) => {
+    if (typeof value !== 'string') {
+      return '';
+    }
+    return value.trim().toLowerCase();
+  };
+
+  const chatSearchText = (chat, row) => {
+    const parts = [];
+    if (chat?.id) {
+      parts.push(String(chat.id));
+    }
+    if (chat?.title) {
+      parts.push(String(chat.title));
+    }
+    if (Array.isArray(row?.participants)) {
+      for (const id of row.participants) {
+        parts.push(String(id));
+      }
+    }
+    const last = typeof row?.lastMessage?.content === 'string' ? row.lastMessage.content : '';
+    if (last) {
+      parts.push(last);
+    }
+    return parts.join(' ').toLowerCase();
   };
 
   return {
@@ -219,6 +247,75 @@ export function createChatService(storage) {
       const rows = await storage.chats.listForUser(userId);
       const unreadByChat = await unreadMapForChats(rows, userId);
       return chatListPayload(rows, userId, unreadByChat);
+    },
+    async searchChatsBody(userId, query) {
+      const q = normalizeSearchQuery(query);
+      if (!q) {
+        return { ok: true, data: { query: '', results: [] } };
+      }
+      const rows = await storage.chats.listForUser(userId);
+      const unreadByChat = await unreadMapForChats(rows, userId);
+      const chatRows = rows.map((chat) => chatRowPayload(chat, userId, unreadByChat[chat.id] ?? 0));
+      const chatById = new Map(rows.map((chat) => [chat.id, chat]));
+
+      const matchedChats = [];
+      for (const row of chatRows) {
+        const source = chatById.get(row.chatId);
+        if (!source) {
+          continue;
+        }
+        const text = chatSearchText(source, row);
+        if (!text.includes(q)) {
+          continue;
+        }
+        matchedChats.push({
+          type: 'chat',
+          chatId: row.chatId,
+          title: row.title,
+          participants: row.participants,
+          unreadCount: row.unreadCount,
+          updatedAt: row.updatedAt,
+          preview: row.lastMessage?.content ?? '',
+          messageId: null,
+          messageCreatedAt: null,
+          messageContent: null,
+        });
+      }
+
+      const matchedMessages = [];
+      for (const row of chatRows) {
+        const list = await listAllMessagesForChat(row.chatId);
+        for (const msg of list) {
+          const content = typeof msg?.body === 'string' ? msg.body : '';
+          if (!content || !content.toLowerCase().includes(q)) {
+            continue;
+          }
+          matchedMessages.push({
+            type: 'message',
+            chatId: row.chatId,
+            title: row.title,
+            participants: row.participants,
+            unreadCount: row.unreadCount,
+            updatedAt: row.updatedAt,
+            preview: content,
+            messageId: msg.id ?? null,
+            messageCreatedAt: Number.isFinite(msg?.createdAt) ? msg.createdAt : null,
+            messageContent: content,
+          });
+        }
+      }
+
+      matchedChats.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+      matchedMessages.sort((a, b) => (b.messageCreatedAt ?? 0) - (a.messageCreatedAt ?? 0));
+
+      const results = [...matchedChats, ...matchedMessages].slice(0, MAX_SEARCH_RESULTS);
+      return {
+        ok: true,
+        data: {
+          query: q,
+          results,
+        },
+      };
     },
     async chatBody(userId, chatId) {
       const chat = await storage.chats.get(chatId);
