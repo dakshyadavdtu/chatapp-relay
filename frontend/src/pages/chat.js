@@ -6,6 +6,7 @@ import {
   getMessagesState,
   chatState,
   bootstrapChatShell,
+  clearSearchState,
   openActiveChat,
   sendActiveMessage,
   refreshActiveChat,
@@ -297,11 +298,15 @@ export async function renderChatPage(container) {
 
   const listEl = document.createElement('ul');
   listEl.className = 'chat-list';
-  const openChatFromSelection = async (chatId, messageId = null) => {
+  const openChatFromSelection = async (chatId, messageId = null, opts = {}) => {
     if (!chatId || typeof chatId !== 'string') {
       return;
     }
     setActiveChatId(chatId);
+    if (opts.clearSearch) {
+      clearSearchState();
+      searchInput.value = '';
+    }
     pendingFocusMessageId = typeof messageId === 'string' && messageId.trim() ? messageId : null;
     input.value = '';
     sendHint.textContent = '';
@@ -336,7 +341,9 @@ export async function renderChatPage(container) {
         const isMessage = result?.type === 'message';
         btn.textContent = isMessage ? `Message in ${baseLabel}` : baseLabel;
         btn.addEventListener('click', async () => {
-          await openChatFromSelection(result?.chatId, result?.messageId ?? null);
+          await openChatFromSelection(result?.chatId, result?.messageId ?? null, {
+            clearSearch: true,
+          });
         });
         li.append(btn);
         const preview = previewForSearchResult(result);
