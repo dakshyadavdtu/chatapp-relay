@@ -36,6 +36,35 @@ function previewForChat(chat) {
   return `${text.slice(0, 57)}...`;
 }
 
+function previewForSearchResult(result) {
+  const text = typeof result?.preview === 'string' ? result.preview.trim() : '';
+  if (!text) {
+    return '';
+  }
+  if (text.length <= 60) {
+    return text;
+  }
+  return `${text.slice(0, 57)}...`;
+}
+
+function chatLabelFromResult(result, chats) {
+  const chatId = typeof result?.chatId === 'string' ? result.chatId : '';
+  if (!chatId) {
+    return 'Chat';
+  }
+  const fromList = chats.find((chat) => chat.chatId === chatId);
+  if (fromList) {
+    return labelForChat(fromList);
+  }
+  if (typeof result?.title === 'string' && result.title.trim()) {
+    return result.title.trim();
+  }
+  if (Array.isArray(result?.participants) && result.participants.length > 0) {
+    return result.participants.join(', ');
+  }
+  return chatId;
+}
+
 function messageErrorText(code) {
   const map = {
     CHAT_NOT_FOUND: 'Chat not found.',
@@ -258,14 +287,41 @@ export async function renderChatPage(container) {
   listEl.className = 'chat-list';
   async function renderSidebar() {
     searchInput.value = chatState.searchQuery;
+    const hasSearchQuery = Boolean(chatState.searchQuery.trim());
     if (chatState.searchStatus === 'loading') {
       searchHint.textContent = 'Searching…';
     } else if (chatState.searchStatus === 'error') {
       searchHint.textContent = 'Search failed.';
+    } else if (hasSearchQuery && chatState.searchStatus === 'ok' && chatState.searchResults.length === 0) {
+      searchHint.textContent = 'No search results.';
     } else {
       searchHint.textContent = '';
     }
     listEl.replaceChildren();
+    if (hasSearchQuery && chatState.searchStatus === 'ok') {
+      statusEl.textContent = '';
+      for (const result of chatState.searchResults) {
+        const li = document.createElement('li');
+        li.className = 'chat-list-item';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'chat-list-button';
+        const baseLabel = chatLabelFromResult(result, chatState.chats);
+        const isMessage = result?.type === 'message';
+        btn.textContent = isMessage ? `Message in ${baseLabel}` : baseLabel;
+        btn.disabled = true;
+        li.append(btn);
+        const preview = previewForSearchResult(result);
+        if (preview) {
+          const previewEl = document.createElement('p');
+          previewEl.className = 'chat-list-preview';
+          previewEl.textContent = preview;
+          li.append(previewEl);
+        }
+        listEl.append(li);
+      }
+      return;
+    }
     if (chatState.loadStatus === 'loading') {
       statusEl.textContent = 'Loading…';
       return;
