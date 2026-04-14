@@ -98,6 +98,15 @@ function chatErrorText(code) {
   return map[code] ?? 'Could not load chat.';
 }
 
+function searchErrorText(code) {
+  const map = {
+    bad_response: 'Search is unavailable right now.',
+    search_failed: 'Search request failed.',
+    METHOD_NOT_ALLOWED: 'Search is unavailable right now.',
+  };
+  return map[code] ?? 'Search request failed.';
+}
+
 function formatTime(ts) {
   if (typeof ts !== 'number') {
     return '';
@@ -300,6 +309,7 @@ export async function renderChatPage(container) {
   listEl.className = 'chat-list';
   const openChatFromSelection = async (chatId, messageId = null, opts = {}) => {
     if (!chatId || typeof chatId !== 'string') {
+      searchHint.textContent = 'Result is no longer available.';
       return;
     }
     setActiveChatId(chatId);
@@ -322,15 +332,38 @@ export async function renderChatPage(container) {
     if (chatState.searchStatus === 'loading') {
       searchHint.textContent = 'Searching…';
     } else if (chatState.searchStatus === 'error') {
-      searchHint.textContent = 'Search failed.';
+      searchHint.textContent = searchErrorText(chatState.searchError);
     } else if (hasSearchQuery && chatState.searchStatus === 'ok' && chatState.searchResults.length === 0) {
       searchHint.textContent = 'No search results.';
     } else {
       searchHint.textContent = '';
     }
     listEl.replaceChildren();
+    if (hasSearchQuery && chatState.searchStatus === 'loading') {
+      statusEl.textContent = '';
+      const li = document.createElement('li');
+      li.className = 'chat-list-item';
+      li.textContent = 'Searching…';
+      listEl.append(li);
+      return;
+    }
+    if (hasSearchQuery && chatState.searchStatus === 'error') {
+      statusEl.textContent = '';
+      const li = document.createElement('li');
+      li.className = 'chat-list-item';
+      li.textContent = searchErrorText(chatState.searchError);
+      listEl.append(li);
+      return;
+    }
     if (hasSearchQuery && chatState.searchStatus === 'ok') {
       statusEl.textContent = '';
+      if (chatState.searchResults.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'chat-list-item';
+        li.textContent = 'No chats or messages match this search.';
+        listEl.append(li);
+        return;
+      }
       for (const result of chatState.searchResults) {
         const li = document.createElement('li');
         li.className = 'chat-list-item';
