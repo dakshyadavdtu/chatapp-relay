@@ -235,3 +235,31 @@ test('messageListBody returns clientId and state from sent message', async () =>
   assert.equal(last.clientId, 'temp_history');
   assert.equal(last.state, 'SENT');
 });
+
+test('searchChatsBody returns chat and message results', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  await chat.sendMessageToChat('u2', 'direct:u1:u2', {
+    content: 'searchable hello day18',
+    clientId: 'tmp_search_1',
+  });
+
+  const out = await chat.searchChatsBody('u1', 'hello');
+  assert.equal(out.ok, true);
+  assert.equal(out.data.query, 'hello');
+  assert.ok(Array.isArray(out.data.results));
+  const chatRow = out.data.results.find((row) => row.type === 'chat');
+  const messageRow = out.data.results.find((row) => row.type === 'message');
+  assert.equal(chatRow?.chatId, 'direct:u1:u2');
+  assert.equal(messageRow?.chatId, 'direct:u1:u2');
+  assert.equal(typeof messageRow?.messageId, 'string');
+});
+
+test('searchChatsBody with empty query returns no results', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const out = await chat.searchChatsBody('u1', '   ');
+  assert.equal(out.ok, true);
+  assert.equal(out.data.query, '');
+  assert.deepEqual(out.data.results, []);
+});

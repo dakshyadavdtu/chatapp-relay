@@ -57,6 +57,36 @@ body {
   font-weight: 600;
 }
 
+.chat-search-form {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0 0 0.4rem;
+}
+
+.chat-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.chat-search-button {
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.chat-search-hint {
+  margin: 0 0 0.4rem;
+  font-size: 0.82rem;
+  opacity: 0.82;
+}
+
 .chat-main {
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -98,6 +128,13 @@ body {
 .chat-list-button[aria-current='true'] {
   border-color: #333;
   background: #f5f5f5;
+}
+
+.chat-list-preview {
+  margin: 0.2rem 0 0;
+  padding: 0 0.15rem;
+  font-size: 0.82rem;
+  opacity: 0.78;
 }
 
 .chat-messages {

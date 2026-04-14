@@ -57,3 +57,24 @@ test('GET messages JSON uses content not body', async () => {
   assert.equal(found.id, found.messageId);
   assert.ok(typeof found.id === 'string' && found.id.length > 0);
 });
+
+test('GET /api/chats/search returns chat discovery rows', async () => {
+  const storage = getStorage();
+  await storage.messages.append({
+    chatId: 'direct:u1:u2',
+    body: `find-me-${Date.now()}`,
+    senderId: 'u2',
+  });
+  const handler = createHttpHandler();
+  const req = { url: '/api/chats/search?q=find-me', method: 'GET' };
+  const res = makeRes();
+  await handler(req, res);
+  assert.equal(res.statusCode, 200);
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, true);
+  assert.equal(body.data.query, 'find-me');
+  assert.ok(Array.isArray(body.data.results));
+  const first = body.data.results[0];
+  assert.ok(first.type === 'chat' || first.type === 'message');
+  assert.equal(typeof first.chatId, 'string');
+});
