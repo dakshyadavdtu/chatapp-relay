@@ -103,10 +103,16 @@ function currentUserId() {
 
 function buildLastMessageFromRow(row) {
   const createdAt = Number.isFinite(row?.createdAt) ? row.createdAt : Date.now();
+  const messageType = row?.messageType === 'image' ? 'image' : 'text';
+  const imageUrl = typeof row?.imageUrl === 'string' ? row.imageUrl : null;
+  const rawText = typeof row?.content === 'string' ? row.content : '';
+  const content = messageType === 'image' && !rawText.trim() ? '[image]' : rawText;
   return {
     id: row?.messageId ?? row?.id ?? null,
     senderId: row?.senderId ?? null,
-    content: typeof row?.content === 'string' ? row.content : '',
+    content,
+    messageType,
+    imageUrl,
     createdAt,
   };
 }
@@ -273,6 +279,18 @@ export function applyIncomingMessage(raw) {
     const merged = { ...items[existIdx], ...row };
     if (items[existIdx].clientId && !row.clientId) {
       merged.clientId = items[existIdx].clientId;
+    }
+    if (items[existIdx].imageUrl && !row.imageUrl) {
+      merged.imageUrl = items[existIdx].imageUrl;
+    }
+    if (items[existIdx].imageName && !row.imageName) {
+      merged.imageName = items[existIdx].imageName;
+    }
+    if (items[existIdx].imageMimeType && !row.imageMimeType) {
+      merged.imageMimeType = items[existIdx].imageMimeType;
+    }
+    if (items[existIdx].messageType === 'image' && row.messageType !== 'image') {
+      merged.messageType = 'image';
     }
     nextItems = [...items];
     nextItems[existIdx] = merged;

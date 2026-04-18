@@ -84,6 +84,18 @@ export function normalizeMessageListForChat(rawList, chatId, existingItems = [])
       if (existing.clientId && !row.clientId) {
         merged.clientId = existing.clientId;
       }
+      if (existing.imageUrl && !row.imageUrl) {
+        merged.imageUrl = existing.imageUrl;
+      }
+      if (existing.imageName && !row.imageName) {
+        merged.imageName = existing.imageName;
+      }
+      if (existing.imageMimeType && !row.imageMimeType) {
+        merged.imageMimeType = existing.imageMimeType;
+      }
+      if (existing.messageType === 'image' && row.messageType !== 'image') {
+        merged.messageType = 'image';
+      }
       if (typeof existing.content === 'string' && existing.content && !merged.content) {
         merged.content = existing.content;
       }

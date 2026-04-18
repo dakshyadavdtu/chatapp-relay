@@ -29,7 +29,13 @@ function labelForChat(chat) {
 }
 
 function previewForChat(chat) {
+  const isImage =
+    chat?.lastMessage?.messageType === 'image' ||
+    (typeof chat?.lastMessage?.imageUrl === 'string' && chat.lastMessage.imageUrl.trim());
   const text = typeof chat?.lastMessage?.content === 'string' ? chat.lastMessage.content.trim() : '';
+  if (isImage && !text) {
+    return '[image]';
+  }
   if (!text) {
     return '';
   }
