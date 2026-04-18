@@ -14,6 +14,7 @@ import {
   setSearchQuery,
   setActiveChatId,
   subscribeChatMessages,
+  uploadImageForActiveChat,
 } from '../features/chat/state.js';
 
 function labelForChat(chat) {
@@ -86,6 +87,19 @@ function sendErrorText(code) {
     SEND_FAILED: 'Could not send message.',
   };
   return map[code] ?? 'Could not send message.';
+}
+
+function uploadErrorText(code) {
+  const map = {
+    NO_ACTIVE_CHAT: 'Pick a chat first.',
+    INVALID_FILE: 'Pick a valid image file.',
+    UNSUPPORTED_FILE_TYPE: 'Only image files are supported.',
+    FILE_TOO_LARGE: 'Image is too large.',
+    UPLOAD_BAD_RESPONSE: 'Upload failed.',
+    UPLOAD_FAILED: 'Upload failed.',
+    PAYLOAD_TOO_LARGE: 'Image is too large.',
+  };
+  return map[code] ?? 'Upload failed.';
 }
 
 function chatErrorText(code) {
@@ -172,6 +186,15 @@ export async function renderChatPage(container) {
   sendBtn.className = 'chat-composer-send';
   sendBtn.type = 'submit';
   sendBtn.textContent = 'Send';
+  const imageBtn = document.createElement('button');
+  imageBtn.className = 'chat-composer-upload';
+  imageBtn.type = 'button';
+  imageBtn.textContent = 'Image';
+  const imageInput = document.createElement('input');
+  imageInput.className = 'chat-image-input';
+  imageInput.type = 'file';
+  imageInput.accept = 'image/*';
+  imageInput.hidden = true;
   const sendHint = document.createElement('p');
   sendHint.className = 'chat-composer-hint';
   const connectionHint = document.createElement('p');
@@ -180,7 +203,9 @@ export async function renderChatPage(container) {
     connectionHint.textContent = socketStateText(getConnectionState());
   };
   setConnectionHint();
-  composer.append(input, sendBtn);
+  composer.append(input, imageBtn, sendBtn, imageInput);
+  const uploadHint = document.createElement('p');
+  uploadHint.className = 'chat-composer-hint';
   let pendingFocusMessageId = null;
 
   async function renderMessagesArea() {
@@ -215,16 +240,27 @@ export async function renderChatPage(container) {
     const recipientId = getActiveRecipientId();
     const canSend = Boolean(recipientId);
     const sending = chatState.sendStatus === 'sending';
-    input.disabled = !canSend || sending;
-    sendBtn.disabled = !canSend || sending;
+    const uploading = chatState.uploadStatus === 'uploading';
+    input.disabled = !canSend || sending || uploading;
+    sendBtn.disabled = !canSend || sending || uploading;
+    imageBtn.disabled = !canSend || sending || uploading;
     if (!canSend) {
       sendHint.textContent = 'Sending is only available for direct chats.';
-    } else if (sending) {
+    } else if (sending || uploading) {
       sendHint.textContent = 'Sending…';
     } else if (chatState.sendStatus === 'error') {
       sendHint.textContent = sendErrorText(chatState.sendError);
     } else {
       sendHint.textContent = '';
+    }
+    if (chatState.uploadStatus === 'uploading') {
+      uploadHint.textContent = 'Uploading image…';
+    } else if (chatState.uploadStatus === 'error') {
+      uploadHint.textContent = uploadErrorText(chatState.uploadError);
+    } else if (chatState.uploadStatus === 'ok') {
+      uploadHint.textContent = 'Image uploaded. Send to post.';
+    } else {
+      uploadHint.textContent = '';
     }
     const msgState = getMessagesState(chatId);
     if (msgState.status === 'idle' || msgState.status === 'loading') {
@@ -473,7 +509,27 @@ export async function renderChatPage(container) {
     await renderMessagesArea();
   });
 
-  main.append(mainHint, messageWrap, composer, sendHint, connectionHint);
+  imageBtn.addEventListener('click', () => {
+    imageInput.click();
+  });
+
+  imageInput.addEventListener('change', async () => {
+    const file = imageInput.files?.[0] ?? null;
+    if (!file) {
+      return;
+    }
+    const out = await uploadImageForActiveChat(file);
+    if (!out.ok) {
+      uploadHint.textContent = uploadErrorText(out.code);
+      imageInput.value = '';
+      await renderMessagesArea();
+      return;
+    }
+    imageInput.value = '';
+    await renderMessagesArea();
+  });
+
+  main.append(mainHint, messageWrap, composer, sendHint, uploadHint, connectionHint);
   await renderMessagesArea();
 
   const onRemoteMessages = (updatedChatId) => {

@@ -48,3 +48,27 @@ export async function searchChats(query) {
   const path = `/api/chats/search?q=${encodeURIComponent(q)}`;
   return getJson(path);
 }
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('FILE_READ_FAILED'));
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function uploadChatImage(file) {
+  if (!file || typeof file !== 'object') {
+    const err = new Error('file required');
+    err.code = 'INVALID_FILE';
+    throw err;
+  }
+  const dataUrl = await fileToDataUrl(file);
+  return postJson('/api/uploads/image', {
+    filename: typeof file.name === 'string' ? file.name : '',
+    mimeType: typeof file.type === 'string' ? file.type : '',
+    size: Number.isFinite(file.size) ? file.size : null,
+    dataUrl,
+  });
+}

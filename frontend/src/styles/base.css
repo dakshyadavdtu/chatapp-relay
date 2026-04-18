@@ -177,6 +177,19 @@ body {
   cursor: pointer;
 }
 
+.chat-composer-upload {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.chat-image-input {
+  display: none;
+}
+
 .chat-composer-hint {
   margin: 0.4rem 0 0;
   font-size: 0.9rem;

@@ -5,6 +5,7 @@ import {
   markChatRead,
   openChat,
   searchChats,
+  uploadChatImage,
   sendMessageToChat,
 } from '../../api/chat.js';
 import { authState } from '../auth/state.js';
@@ -29,6 +30,8 @@ export const chatState = {
   messagesByChat: {},
   sendStatus: 'idle',
   sendError: null,
+  uploadStatus: 'idle',
+  uploadError: null,
   readStatusByChat: {},
   readErrorByChat: {},
   searchQuery: '',
@@ -41,6 +44,7 @@ const chatApi = {
   sendMessageToChat,
   markChatRead,
   searchChats,
+  uploadChatImage,
 };
 
 export function setChatApi(api) {
@@ -53,12 +57,16 @@ export function setChatApi(api) {
   if (api?.searchChats) {
     chatApi.searchChats = api.searchChats;
   }
+  if (api?.uploadChatImage) {
+    chatApi.uploadChatImage = api.uploadChatImage;
+  }
 }
 
 export function resetChatApi() {
   chatApi.sendMessageToChat = sendMessageToChat;
   chatApi.markChatRead = markChatRead;
   chatApi.searchChats = searchChats;
+  chatApi.uploadChatImage = uploadChatImage;
 }
 
 const messageListeners = new Set();
@@ -318,6 +326,8 @@ export function setActiveChatId(chatId) {
   }
   chatState.sendStatus = 'idle';
   chatState.sendError = null;
+  chatState.uploadStatus = 'idle';
+  chatState.uploadError = null;
 }
 
 export function getActiveRecipientId() {
@@ -341,6 +351,8 @@ export function resetChatState() {
   chatState.messagesByChat = {};
   chatState.sendStatus = 'idle';
   chatState.sendError = null;
+  chatState.uploadStatus = 'idle';
+  chatState.uploadError = null;
   chatState.readStatusByChat = {};
   chatState.readErrorByChat = {};
   chatState.searchQuery = '';
@@ -349,6 +361,57 @@ export function resetChatState() {
   chatState.searchResults = [];
   lastReadSyncByChat.clear();
   forcedReadByChat.clear();
+}
+
+const MAX_IMAGE_UPLOAD_BYTES = 2 * 1024 * 1024;
+
+export async function uploadImageForActiveChat(file) {
+  if (!chatState.activeChatId) {
+    chatState.uploadStatus = 'error';
+    chatState.uploadError = 'NO_ACTIVE_CHAT';
+    return { ok: false, code: 'NO_ACTIVE_CHAT' };
+  }
+  if (!file || typeof file !== 'object') {
+    chatState.uploadStatus = 'error';
+    chatState.uploadError = 'INVALID_FILE';
+    return { ok: false, code: 'INVALID_FILE' };
+  }
+  const mimeType = typeof file.type === 'string' ? file.type : '';
+  if (!mimeType.startsWith('image/')) {
+    chatState.uploadStatus = 'error';
+    chatState.uploadError = 'UNSUPPORTED_FILE_TYPE';
+    return { ok: false, code: 'UNSUPPORTED_FILE_TYPE' };
+  }
+  const fileSize = Number.isFinite(file.size) ? file.size : 0;
+  if (fileSize <= 0) {
+    chatState.uploadStatus = 'error';
+    chatState.uploadError = 'INVALID_FILE';
+    return { ok: false, code: 'INVALID_FILE' };
+  }
+  if (fileSize > MAX_IMAGE_UPLOAD_BYTES) {
+    chatState.uploadStatus = 'error';
+    chatState.uploadError = 'FILE_TOO_LARGE';
+    return { ok: false, code: 'FILE_TOO_LARGE' };
+  }
+
+  chatState.uploadStatus = 'uploading';
+  chatState.uploadError = null;
+  try {
+    const out = await chatApi.uploadChatImage(file);
+    const upload = out?.data?.upload;
+    if (!out?.success || !upload || typeof upload.url !== 'string' || !upload.url.trim()) {
+      chatState.uploadStatus = 'error';
+      chatState.uploadError = 'UPLOAD_BAD_RESPONSE';
+      return { ok: false, code: 'UPLOAD_BAD_RESPONSE' };
+    }
+    chatState.uploadStatus = 'ok';
+    chatState.uploadError = null;
+    return { ok: true, data: upload };
+  } catch (e) {
+    chatState.uploadStatus = 'error';
+    chatState.uploadError = e?.code ?? 'UPLOAD_FAILED';
+    return { ok: false, code: chatState.uploadError };
+  }
 }
 
 export function setSearchQuery(query) {
