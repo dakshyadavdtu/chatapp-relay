@@ -34,6 +34,15 @@ function toMessageWire(m) {
     imageName: typeof m.imageName === 'string' ? m.imageName : null,
     imageMimeType: typeof m.imageMimeType === 'string' ? m.imageMimeType : null,
     imageSize: Number.isFinite(m.imageSize) ? m.imageSize : null,
+    image:
+      typeof m.imageUrl === 'string'
+        ? {
+            url: m.imageUrl,
+            name: typeof m.imageName === 'string' ? m.imageName : null,
+            mimeType: typeof m.imageMimeType === 'string' ? m.imageMimeType : null,
+            size: Number.isFinite(m.imageSize) ? m.imageSize : null,
+          }
+        : null,
     createdAt,
     clientId: m.clientId ?? null,
     state: m.state ?? 'SENT',

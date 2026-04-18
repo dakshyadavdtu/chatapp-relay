@@ -103,11 +103,26 @@ export function createChatService(storage) {
   const normalizeSendPayload = (payload) => {
     const contentText = typeof payload?.content === 'string' ? payload.content.trim() : '';
     const clientId = typeof payload?.clientId === 'string' ? payload.clientId.trim() : null;
-    const imageUrl = typeof payload?.imageUrl === 'string' ? payload.imageUrl.trim() : '';
-    const imageName = typeof payload?.imageName === 'string' ? payload.imageName.trim() : '';
-    const imageMimeType =
-      typeof payload?.imageMimeType === 'string' ? payload.imageMimeType.trim() : '';
-    const imageSize = Number.isFinite(payload?.imageSize) ? payload.imageSize : null;
+    const imageUrl = typeof payload?.imageUrl === 'string'
+      ? payload.imageUrl.trim()
+      : typeof payload?.image?.url === 'string'
+        ? payload.image.url.trim()
+        : '';
+    const imageName = typeof payload?.imageName === 'string'
+      ? payload.imageName.trim()
+      : typeof payload?.image?.name === 'string'
+        ? payload.image.name.trim()
+        : '';
+    const imageMimeType = typeof payload?.imageMimeType === 'string'
+      ? payload.imageMimeType.trim()
+      : typeof payload?.image?.mimeType === 'string'
+        ? payload.image.mimeType.trim()
+        : '';
+    const imageSize = Number.isFinite(payload?.imageSize)
+      ? payload.imageSize
+      : Number.isFinite(payload?.image?.size)
+        ? payload.image.size
+        : null;
     const isImage = Boolean(imageUrl);
 
     if (isImage && !imageUrl.startsWith('/uploads/')) {
@@ -226,6 +241,14 @@ export function createChatService(storage) {
             imageName: created.imageName ?? null,
             imageMimeType: created.imageMimeType ?? null,
             imageSize: Number.isFinite(created.imageSize) ? created.imageSize : null,
+            image: created.imageUrl
+              ? {
+                  url: created.imageUrl,
+                  name: created.imageName ?? null,
+                  mimeType: created.imageMimeType ?? null,
+                  size: Number.isFinite(created.imageSize) ? created.imageSize : null,
+                }
+              : null,
             createdAt: created.createdAt,
             clientId: normalized.clientId,
             state: 'SENT',
@@ -292,6 +315,14 @@ export function createChatService(storage) {
             imageName: created.imageName ?? null,
             imageMimeType: created.imageMimeType ?? null,
             imageSize: Number.isFinite(created.imageSize) ? created.imageSize : null,
+            image: created.imageUrl
+              ? {
+                  url: created.imageUrl,
+                  name: created.imageName ?? null,
+                  mimeType: created.imageMimeType ?? null,
+                  size: Number.isFinite(created.imageSize) ? created.imageSize : null,
+                }
+              : null,
             createdAt: created.createdAt,
             clientId: normalized.clientId,
             state: 'SENT',

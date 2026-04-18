@@ -28,6 +28,27 @@ export function normalizeChatMessage(raw, chatId) {
   if (typeof createdAt !== 'number' || Number.isNaN(createdAt)) {
     createdAt = null;
   }
+  const imageUrl = typeof raw.imageUrl === 'string'
+    ? raw.imageUrl
+    : typeof raw.image?.url === 'string'
+      ? raw.image.url
+      : null;
+  const imageName = typeof raw.imageName === 'string'
+    ? raw.imageName
+    : typeof raw.image?.name === 'string'
+      ? raw.image.name
+      : null;
+  const imageMimeType = typeof raw.imageMimeType === 'string'
+    ? raw.imageMimeType
+    : typeof raw.image?.mimeType === 'string'
+      ? raw.image.mimeType
+      : null;
+  const imageSize = Number.isFinite(raw.imageSize)
+    ? raw.imageSize
+    : Number.isFinite(raw.image?.size)
+      ? raw.image.size
+      : null;
+  const messageType = raw.messageType === 'image' || imageUrl ? 'image' : 'text';
   return {
     id,
     messageId: raw.messageId ?? id,
@@ -36,11 +57,11 @@ export function normalizeChatMessage(raw, chatId) {
     senderId: raw.senderId ?? null,
     recipientId: raw.recipientId ?? null,
     content: typeof raw.content === 'string' ? raw.content : '',
-    messageType: raw.messageType === 'image' ? 'image' : 'text',
-    imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : null,
-    imageName: typeof raw.imageName === 'string' ? raw.imageName : null,
-    imageMimeType: typeof raw.imageMimeType === 'string' ? raw.imageMimeType : null,
-    imageSize: Number.isFinite(raw.imageSize) ? raw.imageSize : null,
+    messageType,
+    imageUrl,
+    imageName,
+    imageMimeType,
+    imageSize,
     createdAt,
     state: raw.state ?? null,
   };

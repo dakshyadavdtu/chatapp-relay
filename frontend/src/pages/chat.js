@@ -31,7 +31,8 @@ function labelForChat(chat) {
 function previewForChat(chat) {
   const isImage =
     chat?.lastMessage?.messageType === 'image' ||
-    (typeof chat?.lastMessage?.imageUrl === 'string' && chat.lastMessage.imageUrl.trim());
+    (typeof chat?.lastMessage?.imageUrl === 'string' && chat.lastMessage.imageUrl.trim()) ||
+    (typeof chat?.lastMessage?.image?.url === 'string' && chat.lastMessage.image.url.trim());
   const text = typeof chat?.lastMessage?.content === 'string' ? chat.lastMessage.content.trim() : '';
   if (isImage && !text) {
     return '[image]';
@@ -325,11 +326,16 @@ export async function renderChatPage(container) {
       head.textContent = at ? `${who} (${at})` : `${who}`;
       li.append(head);
 
-      const isImage = m.messageType === 'image' && typeof m.imageUrl === 'string' && m.imageUrl.trim();
+      const imageUrl = typeof m.imageUrl === 'string' && m.imageUrl.trim()
+        ? m.imageUrl
+        : typeof m.image?.url === 'string' && m.image.url.trim()
+          ? m.image.url
+          : '';
+      const isImage = m.messageType === 'image' && Boolean(imageUrl);
       if (isImage) {
         const img = document.createElement('img');
         img.className = 'chat-message-image';
-        img.src = resolveImageUrl(m.imageUrl);
+        img.src = resolveImageUrl(imageUrl);
         img.alt = 'shared image';
         li.append(img);
         if (text && text !== '[image]') {

@@ -27,6 +27,15 @@ function normalizeLastMessage(raw) {
     content: body,
     messageType: raw.messageType === 'image' ? 'image' : 'text',
     imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : null,
+    image:
+      typeof raw.imageUrl === 'string'
+        ? {
+            url: raw.imageUrl,
+            mimeType: typeof raw.imageMimeType === 'string' ? raw.imageMimeType : null,
+            name: typeof raw.imageName === 'string' ? raw.imageName : null,
+            size: Number.isFinite(raw.imageSize) ? raw.imageSize : null,
+          }
+        : null,
     createdAt: raw.createdAt ?? null,
   };
 }

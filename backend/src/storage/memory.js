@@ -111,6 +111,9 @@ export function createMemoryStorage() {
             body: message.body,
             messageType: message.messageType,
             imageUrl: message.imageUrl,
+            imageName: message.imageName,
+            imageMimeType: message.imageMimeType,
+            imageSize: message.imageSize,
             senderId: message.senderId,
             createdAt: message.createdAt,
           };

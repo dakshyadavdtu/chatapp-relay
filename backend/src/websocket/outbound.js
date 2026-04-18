@@ -15,6 +15,14 @@ export function buildMessageCreatedPayload(evt) {
     imageName: evt?.imageName ?? null,
     imageMimeType: evt?.imageMimeType ?? null,
     imageSize: Number.isFinite(evt?.imageSize) ? evt.imageSize : null,
+    image: evt?.imageUrl
+      ? {
+          url: evt.imageUrl,
+          name: evt?.imageName ?? null,
+          mimeType: evt?.imageMimeType ?? null,
+          size: Number.isFinite(evt?.imageSize) ? evt.imageSize : null,
+        }
+      : null,
     createdAt: evt?.createdAt ?? Date.now(),
     timestamp: evt?.createdAt ?? Date.now(),
     state: 'SENT',
@@ -31,6 +39,14 @@ export function buildMessageCreatedPayload(evt) {
       imageName: evt?.imageName ?? null,
       imageMimeType: evt?.imageMimeType ?? null,
       imageSize: Number.isFinite(evt?.imageSize) ? evt.imageSize : null,
+      image: evt?.imageUrl
+        ? {
+            url: evt.imageUrl,
+            name: evt?.imageName ?? null,
+            mimeType: evt?.imageMimeType ?? null,
+            size: Number.isFinite(evt?.imageSize) ? evt.imageSize : null,
+          }
+        : null,
       createdAt: evt?.createdAt ?? Date.now(),
       state: 'SENT',
     },

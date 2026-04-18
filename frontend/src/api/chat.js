@@ -36,6 +36,14 @@ export async function sendMessage(recipientId, content, clientId, options = {}) 
     imageName: typeof image?.name === 'string' ? image.name : null,
     imageMimeType: typeof image?.mimeType === 'string' ? image.mimeType : null,
     imageSize: Number.isFinite(image?.size) ? image.size : null,
+    image: image
+      ? {
+          url: typeof image?.url === 'string' ? image.url : null,
+          name: typeof image?.name === 'string' ? image.name : null,
+          mimeType: typeof image?.mimeType === 'string' ? image.mimeType : null,
+          size: Number.isFinite(image?.size) ? image.size : null,
+        }
+      : null,
   });
 }
 
@@ -49,6 +57,14 @@ export async function sendMessageToChat(chatId, content, clientId, options = {})
     imageName: typeof image?.name === 'string' ? image.name : null,
     imageMimeType: typeof image?.mimeType === 'string' ? image.mimeType : null,
     imageSize: Number.isFinite(image?.size) ? image.size : null,
+    image: image
+      ? {
+          url: typeof image?.url === 'string' ? image.url : null,
+          name: typeof image?.name === 'string' ? image.name : null,
+          mimeType: typeof image?.mimeType === 'string' ? image.mimeType : null,
+          size: Number.isFinite(image?.size) ? image.size : null,
+        }
+      : null,
   });
 }
 
