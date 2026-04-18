@@ -1,4 +1,5 @@
 import { getRoute } from '../app/router.js';
+import { apiUrl } from '../config/api.js';
 import { messageKey, sortMessagesOldestFirst } from '../features/chat/messageList.js';
 import { getConnectionState, subscribeConnection } from '../transport/connectionState.js';
 import {
@@ -130,6 +131,16 @@ function formatTime(ts) {
     return '';
   }
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function resolveImageUrl(raw) {
+  if (typeof raw !== 'string' || !raw.trim()) {
+    return '';
+  }
+  if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:')) {
+    return raw;
+  }
+  return apiUrl(raw);
 }
 
 let lastMessageUnsub = null;
@@ -301,7 +312,30 @@ export async function renderChatPage(container) {
       const who = m.senderId ?? '?';
       const text = typeof m.content === 'string' ? m.content : '';
       const at = formatTime(m.createdAt);
-      li.textContent = at ? `${who} (${at}): ${text}` : `${who}: ${text}`;
+      const head = document.createElement('p');
+      head.className = 'chat-message-head';
+      head.textContent = at ? `${who} (${at})` : `${who}`;
+      li.append(head);
+
+      const isImage = m.messageType === 'image' && typeof m.imageUrl === 'string' && m.imageUrl.trim();
+      if (isImage) {
+        const img = document.createElement('img');
+        img.className = 'chat-message-image';
+        img.src = resolveImageUrl(m.imageUrl);
+        img.alt = 'shared image';
+        li.append(img);
+        if (text && text !== '[image]') {
+          const caption = document.createElement('p');
+          caption.className = 'chat-message-caption';
+          caption.textContent = text;
+          li.append(caption);
+        }
+      } else {
+        const body = document.createElement('p');
+        body.className = 'chat-message-body';
+        body.textContent = text;
+        li.append(body);
+      }
       ul.append(li);
     }
     messageWrap.append(ul);
