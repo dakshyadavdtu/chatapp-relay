@@ -4,6 +4,7 @@ import { saveImageUpload } from '../../../uploads/store.js';
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const DATA_URL_PREFIX = /^data:([a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+);base64,(.+)$/;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
 function decodeDataUrl(dataUrl) {
   if (typeof dataUrl !== 'string') {
@@ -59,6 +60,10 @@ export async function handleApiUploadImage(ctx, res) {
   }
   if (!decoded.mimeType.startsWith('image/')) {
     jsonErr(res, 400, 'Only image files are supported', 'UNSUPPORTED_FILE_TYPE');
+    return;
+  }
+  if (!ALLOWED_IMAGE_TYPES.has(decoded.mimeType)) {
+    jsonErr(res, 400, 'Only jpeg, png, gif, and webp are supported', 'UNSUPPORTED_FILE_TYPE');
     return;
   }
   if (declaredType && declaredType !== decoded.mimeType) {

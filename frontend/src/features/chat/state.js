@@ -382,6 +382,7 @@ export function resetChatState() {
 }
 
 const MAX_IMAGE_UPLOAD_BYTES = 2 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
 export async function uploadImageForActiveChat(file) {
   if (!chatState.activeChatId) {
@@ -395,7 +396,7 @@ export async function uploadImageForActiveChat(file) {
     return { ok: false, code: 'INVALID_FILE' };
   }
   const mimeType = typeof file.type === 'string' ? file.type : '';
-  if (!mimeType.startsWith('image/')) {
+  if (!mimeType.startsWith('image/') || !ALLOWED_IMAGE_TYPES.has(mimeType)) {
     chatState.uploadStatus = 'error';
     chatState.uploadError = 'UNSUPPORTED_FILE_TYPE';
     return { ok: false, code: 'UNSUPPORTED_FILE_TYPE' };

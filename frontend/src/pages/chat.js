@@ -103,6 +103,7 @@ function uploadErrorText(code) {
     UNSUPPORTED_FILE_TYPE: 'Only image files are supported.',
     FILE_TOO_LARGE: 'Image is too large.',
     UPLOAD_BAD_RESPONSE: 'Upload failed.',
+    INVALID_IMAGE_DATA: 'Image data is invalid.',
     UPLOAD_FAILED: 'Upload failed.',
     PAYLOAD_TOO_LARGE: 'Image is too large.',
   };
@@ -276,7 +277,8 @@ export async function renderChatPage(container) {
     } else if (chatState.uploadStatus === 'error') {
       uploadHint.textContent = uploadErrorText(chatState.uploadError);
     } else if (chatState.uploadStatus === 'ok' && pendingImageUpload) {
-      uploadHint.textContent = 'Image uploaded. Send to post.';
+      const name = typeof pendingImageUpload.name === 'string' ? pendingImageUpload.name : '';
+      uploadHint.textContent = name ? `Image ready: ${name}` : 'Image uploaded. Send to post.';
     } else {
       uploadHint.textContent = '';
     }
@@ -563,6 +565,7 @@ export async function renderChatPage(container) {
     if (!file) {
       return;
     }
+    pendingImageUpload = null;
     const out = await uploadImageForActiveChat(file);
     if (!out.ok) {
       uploadHint.textContent = uploadErrorText(out.code);
