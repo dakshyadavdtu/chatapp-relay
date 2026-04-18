@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeMessageListForChat } from './messageList.js';
+import { normalizeChatMessage, normalizeMessageListForChat } from './messageList.js';
 
 test('normalizeMessageListForChat merges and keeps clientId when missing in incoming', () => {
   const existing = [
@@ -63,4 +63,29 @@ test('normalizeMessageListForChat keeps newer local state over stale replay row'
   assert.equal(m.state, 'SENT');
   assert.equal(m.createdAt, 200);
   assert.equal(m.content, 'hello');
+});
+
+test('normalizeChatMessage reads nested image payload fields', () => {
+  const row = normalizeChatMessage(
+    {
+      id: 'm_img_1',
+      chatId: 'c1',
+      senderId: 'u1',
+      content: '[image]',
+      messageType: 'image',
+      image: {
+        url: '/uploads/img_1',
+        name: 'img.png',
+        mimeType: 'image/png',
+        size: 1200,
+      },
+      createdAt: 10,
+    },
+    'c1',
+  );
+  assert.equal(row?.messageType, 'image');
+  assert.equal(row?.imageUrl, '/uploads/img_1');
+  assert.equal(row?.imageName, 'img.png');
+  assert.equal(row?.imageMimeType, 'image/png');
+  assert.equal(row?.imageSize, 1200);
 });

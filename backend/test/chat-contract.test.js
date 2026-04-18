@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { Readable } from 'node:stream';
 import { createHttpHandler } from '../src/http/index.js';
 import { getStorage } from '../src/storage/index.js';
 import { parseMessageListQuery } from '../src/chat/messageListPayload.js';
@@ -17,6 +18,15 @@ function makeRes() {
       this.body = body;
     },
   };
+}
+
+function makeJsonPost(url, payload) {
+  const json = JSON.stringify(payload);
+  const stream = Readable.from([Buffer.from(json)]);
+  stream.url = url;
+  stream.method = 'POST';
+  stream.headers = { 'content-type': 'application/json' };
+  return stream;
 }
 
 test('parseMessageListQuery defaults', () => {
@@ -77,4 +87,46 @@ test('GET /api/chats/search returns chat discovery rows', async () => {
   const first = body.data.results[0];
   assert.ok(first.type === 'chat' || first.type === 'message');
   assert.equal(typeof first.chatId, 'string');
+});
+
+test('POST /api/uploads/image returns upload metadata and serves bytes', async () => {
+  const handler = createHttpHandler();
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO6sJZcAAAAASUVORK5CYII=',
+    'base64',
+  );
+  const req = makeJsonPost('/api/uploads/image', {
+    filename: 'dot.png',
+    mimeType: 'image/png',
+    size: png.length,
+    dataUrl: `data:image/png;base64,${png.toString('base64')}`,
+  });
+  const res = makeRes();
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 200);
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, true);
+  assert.equal(typeof body.data?.upload?.url, 'string');
+
+  const imageRes = makeRes();
+  await handler({ url: body.data.upload.url, method: 'GET' }, imageRes);
+  assert.equal(imageRes.statusCode, 200);
+  assert.equal(imageRes.headers['Content-Type'], 'image/png');
+  assert.ok(Buffer.isBuffer(imageRes.body));
+  assert.equal(imageRes.body.length, png.length);
+});
+
+test('POST /api/uploads/image rejects unsupported type', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/uploads/image', {
+    filename: 'vector.svg',
+    mimeType: 'image/svg+xml',
+    dataUrl: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+  });
+  const res = makeRes();
+  await handler(req, res);
+  assert.equal(res.statusCode, 400);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'UNSUPPORTED_FILE_TYPE');
 });

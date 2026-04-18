@@ -66,3 +66,37 @@ test('applyIncomingMessage resolves send status on matching ack', () => {
   assert.equal(chatState.sendError, null);
   assert.equal(chatState.messagesByChat.c1.items.length, 1);
 });
+
+test('applyIncomingMessage keeps image preview in chat summary', () => {
+  resetChatState();
+  setActiveChatId('c1');
+  chatState.chats = [
+    {
+      chatId: 'c2',
+      type: 'direct',
+      title: null,
+      participants: ['u2'],
+      unreadCount: 0,
+      updatedAt: 0,
+      lastMessage: null,
+    },
+  ];
+
+  applyIncomingMessage({
+    id: 'm_img_1',
+    messageId: 'm_img_1',
+    chatId: 'c2',
+    senderId: 'u2',
+    recipientId: 'u1',
+    content: '',
+    messageType: 'image',
+    imageUrl: '/uploads/img_1',
+    createdAt: 3,
+    state: 'SENT',
+  });
+
+  const summary = chatState.chats.find((chat) => chat.chatId === 'c2');
+  assert.equal(summary?.lastMessage?.messageType, 'image');
+  assert.equal(summary?.lastMessage?.content, '[image]');
+  assert.equal(summary?.lastMessage?.imageUrl, '/uploads/img_1');
+});

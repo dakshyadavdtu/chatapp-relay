@@ -171,6 +171,28 @@ test('sendMessageToChat uses chat recipient and returns message', async () => {
   assert.equal(out.data.message.clientId, 'tmp_456');
 });
 
+test('sendMessageToChat supports image payload', async () => {
+  const storage = createStorage();
+  const chat = createChatService(storage);
+  const out = await chat.sendMessageToChat('u1', 'direct:u1:u2', {
+    content: '',
+    imageUrl: '/uploads/img_1',
+    imageName: 'photo.png',
+    imageMimeType: 'image/png',
+    imageSize: 500,
+    clientId: 'tmp_img_1',
+  });
+  assert.equal(out.ok, true);
+  assert.equal(out.data.message.messageType, 'image');
+  assert.equal(out.data.message.imageUrl, '/uploads/img_1');
+  assert.equal(out.data.message.image?.url, '/uploads/img_1');
+
+  const list = await chat.chatListBody('u1');
+  const row = list.chats.find((chatRow) => chatRow.chatId === 'direct:u1:u2');
+  assert.equal(row?.lastMessage?.messageType, 'image');
+  assert.equal(row?.lastMessage?.content, '[image]');
+});
+
 test('openChatBody returns chat and messages', async () => {
   const storage = createStorage();
   const chat = createChatService(storage);
