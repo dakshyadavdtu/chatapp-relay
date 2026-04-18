@@ -785,7 +785,23 @@ export async function recoverAfterReconnect() {
   return { ok: true, chatId: null };
 }
 
-export async function sendActiveMessage(content) {
+function normalizePendingImage(value) {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  const url = typeof value.url === 'string' ? value.url.trim() : '';
+  if (!url) {
+    return null;
+  }
+  return {
+    url,
+    name: typeof value.name === 'string' ? value.name.trim() : null,
+    mimeType: typeof value.mimeType === 'string' ? value.mimeType.trim() : null,
+    size: Number.isFinite(value.size) ? value.size : null,
+  };
+}
+
+export async function sendActiveMessage(content, options = {}) {
   const chatId = chatState.activeChatId;
   if (!chatId) {
     chatState.sendStatus = 'error';
@@ -798,6 +814,16 @@ export async function sendActiveMessage(content) {
     chatState.sendError = 'NO_RECIPIENT';
     return { ok: false, code: 'NO_RECIPIENT' };
   }
+  const image = normalizePendingImage(options?.image);
+  const text = typeof content === 'string' ? content.trim() : '';
+  if (!text && !image) {
+    chatState.sendStatus = 'error';
+    chatState.sendError = 'INVALID_PAYLOAD';
+    return { ok: false, code: 'INVALID_PAYLOAD' };
+  }
+  const messageType = image ? 'image' : 'text';
+  const outgoingContent = text || (image ? '[image]' : '');
+
   chatState.sendStatus = 'sending';
   chatState.sendError = null;
 
@@ -805,18 +831,27 @@ export async function sendActiveMessage(content) {
   applyIncomingMessage({
     clientId,
     chatId,
-    content,
+    content: outgoingContent,
+    messageType,
+    imageUrl: image?.url ?? null,
+    imageName: image?.name ?? null,
+    imageMimeType: image?.mimeType ?? null,
+    imageSize: image?.size ?? null,
     createdAt: Date.now(),
     state: 'PENDING',
   });
 
   try {
-    const res = await chatApi.sendMessageToChat(chatId, content, clientId);
+    const res = await chatApi.sendMessageToChat(chatId, outgoingContent, clientId, { image });
     if (res?.success === false) {
       throw { code: res.code ?? 'SEND_FAILED' };
     }
     chatState.sendStatus = 'ok';
     chatState.sendError = null;
+    if (image) {
+      chatState.uploadStatus = 'idle';
+      chatState.uploadError = null;
+    }
     const msg = res?.data?.message;
     if (msg && msg.chatId) {
       applyIncomingMessage(msg);
@@ -839,7 +874,12 @@ export async function sendActiveMessage(content) {
     applyIncomingMessage({
       clientId,
       chatId,
-      content,
+      content: outgoingContent,
+      messageType,
+      imageUrl: image?.url ?? null,
+      imageName: image?.name ?? null,
+      imageMimeType: image?.mimeType ?? null,
+      imageSize: image?.size ?? null,
       state: 'ERROR',
     });
     return { ok: false, code: chatState.sendError };

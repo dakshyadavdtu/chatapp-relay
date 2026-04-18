@@ -89,6 +89,11 @@ export function createMemoryStorage() {
           chatId,
           senderId: record.senderId ?? 'u1',
           body: typeof record.body === 'string' ? record.body : '',
+          messageType: record.messageType === 'image' ? 'image' : 'text',
+          imageUrl: typeof record.imageUrl === 'string' ? record.imageUrl : null,
+          imageName: typeof record.imageName === 'string' ? record.imageName : null,
+          imageMimeType: typeof record.imageMimeType === 'string' ? record.imageMimeType : null,
+          imageSize: Number.isFinite(record.imageSize) ? record.imageSize : null,
           createdAt: record.createdAt ?? now(),
           clientId: record.clientId ?? null,
           recipientId: record.recipientId ?? null,
@@ -104,6 +109,8 @@ export function createMemoryStorage() {
           chat.lastMessage = {
             id: message.id,
             body: message.body,
+            messageType: message.messageType,
+            imageUrl: message.imageUrl,
             senderId: message.senderId,
             createdAt: message.createdAt,
           };

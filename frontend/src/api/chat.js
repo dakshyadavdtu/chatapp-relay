@@ -26,13 +26,30 @@ export async function openChat(chatId) {
   return getJson(path);
 }
 
-export async function sendMessage(recipientId, content, clientId) {
-  return postJson('/api/chat/send', { recipientId, content, clientId });
+export async function sendMessage(recipientId, content, clientId, options = {}) {
+  const image = options?.image && typeof options.image === 'object' ? options.image : null;
+  return postJson('/api/chat/send', {
+    recipientId,
+    content,
+    clientId,
+    imageUrl: typeof image?.url === 'string' ? image.url : null,
+    imageName: typeof image?.name === 'string' ? image.name : null,
+    imageMimeType: typeof image?.mimeType === 'string' ? image.mimeType : null,
+    imageSize: Number.isFinite(image?.size) ? image.size : null,
+  });
 }
 
-export async function sendMessageToChat(chatId, content, clientId) {
+export async function sendMessageToChat(chatId, content, clientId, options = {}) {
+  const image = options?.image && typeof options.image === 'object' ? options.image : null;
   const path = `/api/chats/${encodeURIComponent(chatId)}/messages`;
-  return postJson(path, { content, clientId });
+  return postJson(path, {
+    content,
+    clientId,
+    imageUrl: typeof image?.url === 'string' ? image.url : null,
+    imageName: typeof image?.name === 'string' ? image.name : null,
+    imageMimeType: typeof image?.mimeType === 'string' ? image.mimeType : null,
+    imageSize: Number.isFinite(image?.size) ? image.size : null,
+  });
 }
 
 export async function markChatRead(chatId, lastReadMessageId) {

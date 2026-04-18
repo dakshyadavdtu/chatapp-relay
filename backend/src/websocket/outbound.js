@@ -1,6 +1,7 @@
 export function buildMessageCreatedPayload(evt) {
   const mid = evt?.messageId ?? null;
   const clientId = evt?.clientId ?? null;
+  const messageType = evt?.messageType === 'image' ? 'image' : 'text';
   return {
     type: 'MESSAGE_RECEIVE',
     messageId: mid,
@@ -9,6 +10,11 @@ export function buildMessageCreatedPayload(evt) {
     senderId: evt?.senderId ?? null,
     recipientId: evt?.recipientId ?? null,
     content: evt?.content ?? '',
+    messageType,
+    imageUrl: evt?.imageUrl ?? null,
+    imageName: evt?.imageName ?? null,
+    imageMimeType: evt?.imageMimeType ?? null,
+    imageSize: Number.isFinite(evt?.imageSize) ? evt.imageSize : null,
     createdAt: evt?.createdAt ?? Date.now(),
     timestamp: evt?.createdAt ?? Date.now(),
     state: 'SENT',
@@ -20,9 +26,13 @@ export function buildMessageCreatedPayload(evt) {
       senderId: evt?.senderId ?? null,
       recipientId: evt?.recipientId ?? null,
       content: evt?.content ?? '',
+      messageType,
+      imageUrl: evt?.imageUrl ?? null,
+      imageName: evt?.imageName ?? null,
+      imageMimeType: evt?.imageMimeType ?? null,
+      imageSize: Number.isFinite(evt?.imageSize) ? evt.imageSize : null,
       createdAt: evt?.createdAt ?? Date.now(),
       state: 'SENT',
     },
   };
 }
-

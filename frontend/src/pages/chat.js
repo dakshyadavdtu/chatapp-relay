@@ -207,6 +207,7 @@ export async function renderChatPage(container) {
   const uploadHint = document.createElement('p');
   uploadHint.className = 'chat-composer-hint';
   let pendingFocusMessageId = null;
+  let pendingImageUpload = null;
 
   async function renderMessagesArea() {
     const chatId = chatState.activeChatId;
@@ -257,7 +258,7 @@ export async function renderChatPage(container) {
       uploadHint.textContent = 'Uploading image…';
     } else if (chatState.uploadStatus === 'error') {
       uploadHint.textContent = uploadErrorText(chatState.uploadError);
-    } else if (chatState.uploadStatus === 'ok') {
+    } else if (chatState.uploadStatus === 'ok' && pendingImageUpload) {
       uploadHint.textContent = 'Image uploaded. Send to post.';
     } else {
       uploadHint.textContent = '';
@@ -354,6 +355,8 @@ export async function renderChatPage(container) {
       searchInput.value = '';
     }
     pendingFocusMessageId = typeof messageId === 'string' && messageId.trim() ? messageId : null;
+    pendingImageUpload = null;
+    uploadHint.textContent = '';
     input.value = '';
     sendHint.textContent = '';
     sendBtn.disabled = true;
@@ -486,14 +489,14 @@ export async function renderChatPage(container) {
   composer.addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = input.value.trim();
-    if (!text) {
+    if (!text && !pendingImageUpload) {
       sendHint.textContent = 'Enter a message.';
       return;
     }
     sendBtn.disabled = true;
     input.disabled = true;
     sendHint.textContent = 'Sending…';
-    const out = await sendActiveMessage(text);
+    const out = await sendActiveMessage(text, { image: pendingImageUpload });
     if (!out.ok) {
       sendHint.textContent = sendErrorText(out.code);
       input.disabled = false;
@@ -501,7 +504,9 @@ export async function renderChatPage(container) {
       return;
     }
     input.value = '';
+    pendingImageUpload = null;
     sendHint.textContent = '';
+    uploadHint.textContent = '';
     input.disabled = false;
     sendBtn.disabled = !getActiveRecipientId();
     await refreshActiveChat();
@@ -521,10 +526,17 @@ export async function renderChatPage(container) {
     const out = await uploadImageForActiveChat(file);
     if (!out.ok) {
       uploadHint.textContent = uploadErrorText(out.code);
+      pendingImageUpload = null;
       imageInput.value = '';
       await renderMessagesArea();
       return;
     }
+    pendingImageUpload = {
+      url: out.data.url,
+      name: out.data.filename ?? null,
+      mimeType: out.data.mimeType ?? null,
+      size: out.data.size ?? null,
+    };
     imageInput.value = '';
     await renderMessagesArea();
   });

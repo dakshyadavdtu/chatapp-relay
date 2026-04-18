@@ -36,6 +36,11 @@ export function normalizeChatMessage(raw, chatId) {
     senderId: raw.senderId ?? null,
     recipientId: raw.recipientId ?? null,
     content: typeof raw.content === 'string' ? raw.content : '',
+    messageType: raw.messageType === 'image' ? 'image' : 'text',
+    imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : null,
+    imageName: typeof raw.imageName === 'string' ? raw.imageName : null,
+    imageMimeType: typeof raw.imageMimeType === 'string' ? raw.imageMimeType : null,
+    imageSize: Number.isFinite(raw.imageSize) ? raw.imageSize : null,
     createdAt,
     state: raw.state ?? null,
   };

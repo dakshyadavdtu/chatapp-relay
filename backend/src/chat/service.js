@@ -6,6 +6,7 @@ import { messageListPayload, parseMessageListQuery } from './messageListPayload.
 
 const MAX_MESSAGE_CONTENT_LENGTH = 2000;
 const MAX_SEARCH_RESULTS = 25;
+const IMAGE_MESSAGE_PLACEHOLDER = '[image]';
 
 export function createChatService(storage) {
   if (!storage || typeof storage !== 'object') {
@@ -99,6 +100,49 @@ export function createChatService(storage) {
     return parts.join(' ').toLowerCase();
   };
 
+  const normalizeSendPayload = (payload) => {
+    const contentText = typeof payload?.content === 'string' ? payload.content.trim() : '';
+    const clientId = typeof payload?.clientId === 'string' ? payload.clientId.trim() : null;
+    const imageUrl = typeof payload?.imageUrl === 'string' ? payload.imageUrl.trim() : '';
+    const imageName = typeof payload?.imageName === 'string' ? payload.imageName.trim() : '';
+    const imageMimeType =
+      typeof payload?.imageMimeType === 'string' ? payload.imageMimeType.trim() : '';
+    const imageSize = Number.isFinite(payload?.imageSize) ? payload.imageSize : null;
+    const isImage = Boolean(imageUrl);
+
+    if (isImage && !imageUrl.startsWith('/uploads/')) {
+      return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'imageUrl invalid' };
+    }
+    if (isImage && imageMimeType && !imageMimeType.startsWith('image/')) {
+      return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'imageMimeType invalid' };
+    }
+    if (!isImage && !contentText) {
+      return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'content required' };
+    }
+    if (contentText.length > MAX_MESSAGE_CONTENT_LENGTH) {
+      return {
+        ok: false,
+        status: 400,
+        code: 'CONTENT_TOO_LONG',
+        message: `content exceeds ${MAX_MESSAGE_CONTENT_LENGTH}`,
+      };
+    }
+    if (isImage && imageSize !== null && imageSize < 0) {
+      return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'imageSize invalid' };
+    }
+
+    return {
+      ok: true,
+      content: isImage ? contentText || IMAGE_MESSAGE_PLACEHOLDER : contentText,
+      clientId,
+      messageType: isImage ? 'image' : 'text',
+      imageUrl: isImage ? imageUrl : null,
+      imageName: isImage ? imageName || null : null,
+      imageMimeType: isImage ? imageMimeType || null : null,
+      imageSize: isImage ? imageSize : null,
+    };
+  };
+
   return {
     async listChatsForUser(userId) {
       return storage.chats.listForUser(userId);
@@ -117,21 +161,12 @@ export function createChatService(storage) {
     },
     async sendMessageBody(userId, payload) {
       const recipientId = typeof payload?.recipientId === 'string' ? payload.recipientId.trim() : '';
-      const content = typeof payload?.content === 'string' ? payload.content.trim() : '';
-      const clientId = typeof payload?.clientId === 'string' ? payload.clientId.trim() : null;
+      const normalized = normalizeSendPayload(payload);
       if (!recipientId) {
         return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'recipientId required' };
       }
-      if (!content) {
-        return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'content required' };
-      }
-      if (content.length > MAX_MESSAGE_CONTENT_LENGTH) {
-        return {
-          ok: false,
-          status: 400,
-          code: 'CONTENT_TOO_LONG',
-          message: `content exceeds ${MAX_MESSAGE_CONTENT_LENGTH}`,
-        };
+      if (!normalized.ok) {
+        return normalized;
       }
       const senderId = String(userId);
       if (senderId === recipientId) {
@@ -152,9 +187,14 @@ export function createChatService(storage) {
       const created = await storage.messages.append({
         chatId: chat.id,
         senderId,
-        body: content,
-        clientId,
+        body: normalized.content,
+        clientId: normalized.clientId,
         recipientId,
+        messageType: normalized.messageType,
+        imageUrl: normalized.imageUrl,
+        imageName: normalized.imageName,
+        imageMimeType: normalized.imageMimeType,
+        imageSize: normalized.imageSize,
       });
       emitMessageCreated({
         messageId: created.id,
@@ -162,8 +202,13 @@ export function createChatService(storage) {
         senderId: created.senderId,
         recipientId,
         content: created.body,
+        messageType: created.messageType,
+        imageUrl: created.imageUrl,
+        imageName: created.imageName,
+        imageMimeType: created.imageMimeType,
+        imageSize: created.imageSize,
         createdAt: created.createdAt,
-        clientId,
+        clientId: normalized.clientId,
       });
       return {
         ok: true,
@@ -176,26 +221,22 @@ export function createChatService(storage) {
             senderId: created.senderId,
             recipientId,
             content: created.body,
+            messageType: created.messageType ?? 'text',
+            imageUrl: created.imageUrl ?? null,
+            imageName: created.imageName ?? null,
+            imageMimeType: created.imageMimeType ?? null,
+            imageSize: Number.isFinite(created.imageSize) ? created.imageSize : null,
             createdAt: created.createdAt,
-            clientId,
+            clientId: normalized.clientId,
             state: 'SENT',
           },
         },
       };
     },
     async sendMessageToChat(userId, chatId, payload) {
-      const content = typeof payload?.content === 'string' ? payload.content.trim() : '';
-      const clientId = typeof payload?.clientId === 'string' ? payload.clientId.trim() : null;
-      if (!content) {
-        return { ok: false, status: 400, code: 'INVALID_PAYLOAD', message: 'content required' };
-      }
-      if (content.length > MAX_MESSAGE_CONTENT_LENGTH) {
-        return {
-          ok: false,
-          status: 400,
-          code: 'CONTENT_TOO_LONG',
-          message: `content exceeds ${MAX_MESSAGE_CONTENT_LENGTH}`,
-        };
+      const normalized = normalizeSendPayload(payload);
+      if (!normalized.ok) {
+        return normalized;
       }
       const chat = await storage.chats.get(chatId);
       if (!chat) {
@@ -212,9 +253,14 @@ export function createChatService(storage) {
       const created = await storage.messages.append({
         chatId,
         senderId: userId,
-        body: content,
-        clientId,
+        body: normalized.content,
+        clientId: normalized.clientId,
         recipientId,
+        messageType: normalized.messageType,
+        imageUrl: normalized.imageUrl,
+        imageName: normalized.imageName,
+        imageMimeType: normalized.imageMimeType,
+        imageSize: normalized.imageSize,
       });
       emitMessageCreated({
         messageId: created.id,
@@ -222,8 +268,13 @@ export function createChatService(storage) {
         senderId: created.senderId,
         recipientId,
         content: created.body,
+        messageType: created.messageType,
+        imageUrl: created.imageUrl,
+        imageName: created.imageName,
+        imageMimeType: created.imageMimeType,
+        imageSize: created.imageSize,
         createdAt: created.createdAt,
-        clientId,
+        clientId: normalized.clientId,
       });
       return {
         ok: true,
@@ -236,8 +287,13 @@ export function createChatService(storage) {
             senderId: created.senderId,
             recipientId,
             content: created.body,
+            messageType: created.messageType ?? 'text',
+            imageUrl: created.imageUrl ?? null,
+            imageName: created.imageName ?? null,
+            imageMimeType: created.imageMimeType ?? null,
+            imageSize: Number.isFinite(created.imageSize) ? created.imageSize : null,
             createdAt: created.createdAt,
-            clientId,
+            clientId: normalized.clientId,
             state: 'SENT',
           },
         },

@@ -25,6 +25,8 @@ function normalizeLastMessage(raw) {
     id: raw.id ?? null,
     senderId: raw.senderId ?? null,
     content: body,
+    messageType: raw.messageType === 'image' ? 'image' : 'text',
+    imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : null,
     createdAt: raw.createdAt ?? null,
   };
 }
