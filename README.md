@@ -40,6 +40,6 @@ npm run dev
 # optional: npm test (frontend feature tests)
 ```
 
-Auth is minimal: use the home page form with any non-empty username/password. The backend sets a `sid` cookie, `/api/me` returns the current user while it’s valid, and the home page logout button clears the session, stops chat, and sends you back home if you were on `#/chat`.
+Auth is minimal and in-memory: use the home page form with any non-empty username/password, or call `POST /api/register` with the same fields. Both issue a `sid` cookie, `/api/me` returns the current user while it’s valid, and the home page logout button clears the session, stops chat, and sends you back home if you were on `#/chat`.
 
 If you need custom ports or URLs, copy `.env.example` to `.env` in `backend/` or `frontend/` and edit there. Vite proxies `/api` in dev only; set `VITE_WS_URL` if the WebSocket host or port differs from the default.
