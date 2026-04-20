@@ -1,6 +1,6 @@
 import { registerWithBody } from '../../../auth/service.js';
 import { readJsonBody } from '../../body.js';
-import { jsonErr } from '../../json.js';
+import { jsonErr, jsonOk } from '../../json.js';
 
 export async function handleAuthRegister(ctx, res) {
   const ct = ctx.req.headers['content-type'] ?? '';
@@ -20,9 +20,16 @@ export async function handleAuthRegister(ctx, res) {
     return;
   }
   const result = await registerWithBody(body ?? {});
-  if (!result.ok && result.code === 'NOT_IMPLEMENTED') {
-    jsonErr(res, 501, 'Not implemented', 'NOT_IMPLEMENTED');
+  if (!result.ok && result.code === 'INVALID_CREDENTIALS') {
+    jsonErr(res, 400, 'username and password required', 'INVALID_CREDENTIALS');
     return;
   }
-  jsonErr(res, 400, 'Invalid request', 'INVALID_REQUEST');
+  if (!result.ok) {
+    jsonErr(res, 400, 'Invalid request', 'INVALID_REQUEST');
+    return;
+  }
+  if (result.token) {
+    res.setHeader('Set-Cookie', `sid=${result.token}; Path=/; HttpOnly`);
+  }
+  jsonOk(res, { user: result.user }, 201);
 }

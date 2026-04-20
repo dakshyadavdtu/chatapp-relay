@@ -27,5 +27,10 @@ export async function logoutWithRequest(req) {
 }
 
 export async function registerWithBody(_body) {
-  return { ok: false, code: 'NOT_IMPLEMENTED' };
+  const username = _body?.username;
+  const password = _body?.password;
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    return { ok: false, code: 'INVALID_CREDENTIALS' };
+  }
+  return loginWithPassword(username, password);
 }

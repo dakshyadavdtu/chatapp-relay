@@ -321,16 +321,31 @@ test('POST /api/logout', async () => {
   assert.deepEqual(JSON.parse(res.body), { success: true, data: {} });
 });
 
-test('POST /api/register not implemented', async () => {
+test('POST /api/register creates session', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/register', { username: 'x', password: 'pw' });
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 201);
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, true);
+  assert.equal(body.data?.user?.username, 'x');
+  assert.ok(res.headers['Set-Cookie']);
+});
+
+test('POST /api/register rejects missing fields', async () => {
   const handler = createHttpHandler();
   const req = makeJsonPost('/api/register', { username: 'x' });
   const res = makeRes();
 
   await handler(req, res);
 
-  assert.equal(res.statusCode, 501);
+  assert.equal(res.statusCode, 400);
   const body = JSON.parse(res.body);
-  assert.equal(body.code, 'NOT_IMPLEMENTED');
+  assert.equal(body.success, false);
+  assert.equal(body.code, 'INVALID_CREDENTIALS');
 });
 
 test('POST /api/chat/send creates message', async () => {
