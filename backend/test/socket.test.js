@@ -14,7 +14,7 @@ test('websocket ping message gets pong', async () => {
   });
 
   const { port } = server.address();
-  const ws = new WebSocket(`ws://127.0.0.1:${port}/`);
+  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`);
 
   await new Promise((resolve, reject) => {
     ws.once('open', resolve);
@@ -53,7 +53,7 @@ test('send message emits websocket message.created event', async () => {
   });
 
   const { port } = server.address();
-  const ws = new WebSocket(`ws://127.0.0.1:${port}/`);
+  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`);
   await new Promise((resolve, reject) => {
     ws.once('open', resolve);
     ws.once('error', reject);
@@ -98,6 +98,28 @@ test('send message emits websocket message.created event', async () => {
   });
 });
 
+test('websocket upgrade at non-/ws path is rejected', async () => {
+  const server = createServer(createHttpHandler());
+  attachWebSocket(server);
+
+  await new Promise((resolve, reject) => {
+    server.listen(0, (err) => (err ? reject(err) : resolve()));
+  });
+
+  const { port } = server.address();
+  const ws = new WebSocket(`ws://127.0.0.1:${port}/`);
+
+  const err = await new Promise((resolve) => {
+    ws.once('error', (e) => resolve(e));
+    ws.once('open', () => resolve(null));
+  });
+  assert.ok(err, 'expected upgrade error');
+
+  await new Promise((resolve, reject) => {
+    server.close((e) => (e ? reject(e) : resolve()));
+  });
+});
+
 test('socket closes with auth code for invalid session cookie', async () => {
   const server = createServer(createHttpHandler());
   attachWebSocket(server);
@@ -107,7 +129,7 @@ test('socket closes with auth code for invalid session cookie', async () => {
   });
 
   const { port } = server.address();
-  const ws = new WebSocket(`ws://127.0.0.1:${port}/`, {
+  const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`, {
     headers: {
       cookie: 'sid=sid_invalid_cookie',
     },
