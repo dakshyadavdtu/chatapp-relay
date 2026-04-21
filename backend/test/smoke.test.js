@@ -236,23 +236,59 @@ test('POST /api/login rejects missing fields', async () => {
   assert.equal(body.code, 'INVALID_CREDENTIALS');
 });
 
-test('POST /api/login accepts basic credentials', async () => {
+test('POST /api/login rejects unknown user', async () => {
   const handler = createHttpHandler();
-  const req = makeJsonPost('/api/login', { username: 'a', password: 'b' });
+  const req = makeJsonPost('/api/login', { username: 'ghost', password: 'nope' });
   const res = makeRes();
 
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 401);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'INVALID_CREDENTIALS');
+});
+
+test('POST /api/login accepts registered credentials', async () => {
+  const handler = createHttpHandler();
+  const reg = makeJsonPost('/api/register', { username: 'login-basic', password: 'pw1234' });
+  const regRes = makeRes();
+  await handler(reg, regRes);
+  assert.equal(regRes.statusCode, 201);
+
+  const req = makeJsonPost('/api/login', { username: 'login-basic', password: 'pw1234' });
+  const res = makeRes();
   await handler(req, res);
 
   assert.equal(res.statusCode, 200);
   const body = JSON.parse(res.body);
   assert.equal(body.success, true);
-  assert.equal(body.data?.user?.username, 'a');
+  assert.equal(body.data?.user?.username, 'login-basic');
   assert.ok(res.headers['Set-Cookie']);
+});
+
+test('POST /api/login rejects wrong password', async () => {
+  const handler = createHttpHandler();
+  const reg = makeJsonPost('/api/register', { username: 'wrongpw-user', password: 'right-pass' });
+  const regRes = makeRes();
+  await handler(reg, regRes);
+  assert.equal(regRes.statusCode, 201);
+
+  const req = makeJsonPost('/api/login', { username: 'wrongpw-user', password: 'bad' });
+  const res = makeRes();
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 401);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'INVALID_CREDENTIALS');
 });
 
 test('GET /api/me after login returns user', async () => {
   const handler = createHttpHandler();
-  const loginReq = makeJsonPost('/api/login', { username: 'a', password: 'b' });
+  const reg = makeJsonPost('/api/register', { username: 'me-after', password: 'pw1234' });
+  const regRes = makeRes();
+  await handler(reg, regRes);
+
+  const loginReq = makeJsonPost('/api/login', { username: 'me-after', password: 'pw1234' });
   const loginRes = makeRes();
   await handler(loginReq, loginRes);
   const cookie = loginRes.headers['Set-Cookie'];
@@ -264,12 +300,14 @@ test('GET /api/me after login returns user', async () => {
   assert.equal(meRes.statusCode, 200);
   const body = JSON.parse(meRes.body);
   assert.equal(body.success, true);
-  assert.equal(body.data?.user?.username, 'a');
+  assert.equal(body.data?.user?.username, 'me-after');
 });
 
 test('POST /api/logout clears session', async () => {
   const handler = createHttpHandler();
-  const loginReq = makeJsonPost('/api/login', { username: 'a', password: 'b' });
+  const reg = makeJsonPost('/api/register', { username: 'logout-user', password: 'pw1234' });
+  await handler(reg, makeRes());
+  const loginReq = makeJsonPost('/api/login', { username: 'logout-user', password: 'pw1234' });
   const loginRes = makeRes();
   await handler(loginReq, loginRes);
   const cookie = loginRes.headers['Set-Cookie'];
@@ -288,14 +326,17 @@ test('POST /api/logout clears session', async () => {
 
 test('POST /api/auth/login same as login', async () => {
   const handler = createHttpHandler();
-  const req = makeJsonPost('/api/auth/login', { username: 'a', password: 'b' });
+  const reg = makeJsonPost('/api/register', { username: 'auth-alias', password: 'pw1234' });
+  await handler(reg, makeRes());
+
+  const req = makeJsonPost('/api/auth/login', { username: 'auth-alias', password: 'pw1234' });
   const res = makeRes();
 
   await handler(req, res);
 
   assert.equal(res.statusCode, 200);
   const body = JSON.parse(res.body);
-  assert.equal(body.data?.user?.username, 'a');
+  assert.equal(body.data?.user?.username, 'auth-alias');
 });
 
 test('POST /api/auth/refresh unauthenticated', async () => {
@@ -346,6 +387,21 @@ test('POST /api/register rejects missing fields', async () => {
   const body = JSON.parse(res.body);
   assert.equal(body.success, false);
   assert.equal(body.code, 'INVALID_CREDENTIALS');
+});
+
+test('POST /api/register rejects duplicate username', async () => {
+  const handler = createHttpHandler();
+  const first = makeJsonPost('/api/register', { username: 'dup-user', password: 'pw1234' });
+  const firstRes = makeRes();
+  await handler(first, firstRes);
+  assert.equal(firstRes.statusCode, 201);
+
+  const second = makeJsonPost('/api/register', { username: 'dup-user', password: 'pw1234' });
+  const secondRes = makeRes();
+  await handler(second, secondRes);
+  assert.equal(secondRes.statusCode, 409);
+  const body = JSON.parse(secondRes.body);
+  assert.equal(body.code, 'USERNAME_TAKEN');
 });
 
 test('POST /api/chat/send creates message', async () => {

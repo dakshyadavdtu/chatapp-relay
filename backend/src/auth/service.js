@@ -1,15 +1,14 @@
 import { createSession, deleteSession, getSession } from './session.js';
 import { getCookie } from './cookies.js';
+import { authenticate, createUser } from './users.js';
 
 export async function loginWithPassword(username, password) {
-  const name = typeof username === 'string' ? username.trim() : '';
-  const pass = typeof password === 'string' ? password : '';
-  if (!name || !pass) {
-    return { ok: false, code: 'INVALID_CREDENTIALS' };
+  const result = authenticate(username, password);
+  if (!result.ok) {
+    return result;
   }
-  const user = { id: `user:${name}`, username: name };
-  const session = createSession(user);
-  return { ok: true, user, token: session.token };
+  const session = createSession(result.user);
+  return { ok: true, user: result.user, token: session.token };
 }
 
 export async function refreshWithRequest(req) {
@@ -26,11 +25,16 @@ export async function logoutWithRequest(req) {
   return { ok: true };
 }
 
-export async function registerWithBody(_body) {
-  const username = _body?.username;
-  const password = _body?.password;
+export async function registerWithBody(body) {
+  const username = body?.username;
+  const password = body?.password;
   if (typeof username !== 'string' || typeof password !== 'string') {
     return { ok: false, code: 'INVALID_CREDENTIALS' };
   }
-  return loginWithPassword(username, password);
+  const created = createUser(username, password);
+  if (!created.ok) {
+    return created;
+  }
+  const session = createSession(created.user);
+  return { ok: true, user: created.user, token: session.token };
 }

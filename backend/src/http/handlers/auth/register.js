@@ -24,6 +24,10 @@ export async function handleAuthRegister(ctx, res) {
     jsonErr(res, 400, 'username and password required', 'INVALID_CREDENTIALS');
     return;
   }
+  if (!result.ok && result.code === 'USERNAME_TAKEN') {
+    jsonErr(res, 409, 'Username already registered', 'USERNAME_TAKEN');
+    return;
+  }
   if (!result.ok) {
     jsonErr(res, 400, 'Invalid request', 'INVALID_REQUEST');
     return;
