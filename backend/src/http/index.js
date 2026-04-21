@@ -1,8 +1,14 @@
 import { createRequestContext } from './request.js';
 import { match } from './routes.js';
+import { applyCorsHeaders, handlePreflight } from './cors.js';
 
 export function createHttpHandler() {
   return (req, res) => {
+    if (handlePreflight(req, res)) {
+      return;
+    }
+    applyCorsHeaders(req, res);
+
     const ctx = createRequestContext(req);
     const matched = match(ctx.method, ctx.path);
     if (matched) {
@@ -20,4 +26,3 @@ export function createHttpHandler() {
     res.end('not found\n');
   };
 }
-

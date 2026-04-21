@@ -1,4 +1,5 @@
 import { loginWithPassword } from '../../../auth/service.js';
+import { buildSessionCookie } from '../../../auth/cookies.js';
 import { readJsonBody } from '../../body.js';
 import { jsonErr, jsonOk } from '../../json.js';
 
@@ -35,7 +36,7 @@ export async function handleAuthLogin(ctx, res) {
     return;
   }
   if (out.token) {
-    res.setHeader('Set-Cookie', `sid=${out.token}; Path=/; HttpOnly`);
+    res.setHeader('Set-Cookie', buildSessionCookie(out.token));
   }
   jsonOk(res, { user: out.user });
 }
