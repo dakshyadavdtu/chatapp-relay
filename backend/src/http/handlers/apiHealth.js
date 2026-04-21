@@ -1,4 +1,5 @@
 import { jsonErr, jsonOk } from '../json.js';
+import { getHealth } from '../../services/health.js';
 
 export function handleApiHealth(ctx, res) {
   if (ctx.method !== 'GET' && ctx.method !== 'HEAD') {
@@ -10,5 +11,11 @@ export function handleApiHealth(ctx, res) {
     res.end();
     return;
   }
-  jsonOk(res, { ok: true });
+  const h = getHealth();
+  jsonOk(res, {
+    ok: h.ok,
+    uptimeMs: h.uptimeMs,
+    startedAt: h.startedAt,
+    now: h.now,
+  });
 }

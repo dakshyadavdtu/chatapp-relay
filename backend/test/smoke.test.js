@@ -22,7 +22,10 @@ function makePlainPost(url, body) {
 }
 
 test('health service', () => {
-  assert.deepEqual(getHealth(), { ok: true });
+  const h = getHealth();
+  assert.equal(h.ok, true);
+  assert.equal(typeof h.uptimeMs, 'number');
+  assert.equal(typeof h.startedAt, 'number');
 });
 
 function makeRes() {
@@ -51,7 +54,7 @@ test('http route /', async () => {
   await handler(req, res);
 
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(res.headers, { 'Content-Type': 'text/plain; charset=utf-8' });
+  assert.equal(res.headers['Content-Type'], 'text/plain; charset=utf-8');
   assert.equal(res.body, 'ok\n');
 });
 
@@ -63,7 +66,7 @@ test('http route /health', async () => {
   await handler(req, res);
 
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(res.headers, { 'Content-Type': 'text/plain; charset=utf-8' });
+  assert.equal(res.headers['Content-Type'], 'text/plain; charset=utf-8');
   assert.equal(res.body, 'ok\n');
 });
 
@@ -75,7 +78,7 @@ test('http route /health with query', async () => {
   await handler(req, res);
 
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(res.headers, { 'Content-Type': 'text/plain; charset=utf-8' });
+  assert.equal(res.headers['Content-Type'], 'text/plain; charset=utf-8');
   assert.equal(res.body, 'ok\n');
 });
 
@@ -88,7 +91,10 @@ test('http route /api/health', async () => {
 
   assert.equal(res.statusCode, 200);
   assert.equal(res.headers['Content-Type'], 'application/json; charset=utf-8');
-  assert.deepEqual(JSON.parse(res.body), { success: true, data: { ok: true } });
+  const body = JSON.parse(res.body);
+  assert.equal(body.success, true);
+  assert.equal(body.data?.ok, true);
+  assert.equal(typeof body.data?.uptimeMs, 'number');
 });
 
 test('http route /api/me unauthenticated', async () => {
@@ -113,7 +119,7 @@ test('http route 404', async () => {
   await handler(req, res);
 
   assert.equal(res.statusCode, 404);
-  assert.deepEqual(res.headers, { 'Content-Type': 'text/plain; charset=utf-8' });
+  assert.equal(res.headers['Content-Type'], 'text/plain; charset=utf-8');
   assert.equal(res.body, 'not found\n');
 });
 

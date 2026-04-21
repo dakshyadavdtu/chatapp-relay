@@ -1,9 +1,11 @@
 import { createRequestContext } from './request.js';
 import { match } from './routes.js';
 import { applyCorsHeaders, handlePreflight } from './cors.js';
+import { applySecurityHeaders } from './security.js';
 
 export function createHttpHandler() {
   return (req, res) => {
+    applySecurityHeaders(req, res);
     if (handlePreflight(req, res)) {
       return;
     }
