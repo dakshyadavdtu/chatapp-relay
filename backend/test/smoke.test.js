@@ -370,7 +370,7 @@ test('POST /api/logout', async () => {
 
 test('POST /api/register creates session', async () => {
   const handler = createHttpHandler();
-  const req = makeJsonPost('/api/register', { username: 'x', password: 'pw' });
+  const req = makeJsonPost('/api/register', { username: 'new-user', password: 'pw1234' });
   const res = makeRes();
 
   await handler(req, res);
@@ -378,8 +378,32 @@ test('POST /api/register creates session', async () => {
   assert.equal(res.statusCode, 201);
   const body = JSON.parse(res.body);
   assert.equal(body.success, true);
-  assert.equal(body.data?.user?.username, 'x');
+  assert.equal(body.data?.user?.username, 'new-user');
   assert.ok(res.headers['Set-Cookie']);
+});
+
+test('POST /api/register rejects short username', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/register', { username: 'x', password: 'pw1234' });
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 400);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'INVALID_USERNAME');
+});
+
+test('POST /api/register rejects short password', async () => {
+  const handler = createHttpHandler();
+  const req = makeJsonPost('/api/register', { username: 'short-pw-user', password: 'ab' });
+  const res = makeRes();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 400);
+  const body = JSON.parse(res.body);
+  assert.equal(body.code, 'INVALID_PASSWORD');
 });
 
 test('POST /api/register rejects missing fields', async () => {

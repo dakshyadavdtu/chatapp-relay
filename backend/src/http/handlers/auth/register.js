@@ -34,6 +34,19 @@ export async function handleAuthRegister(ctx, res) {
     jsonErr(res, 400, 'username and password required', 'INVALID_CREDENTIALS');
     return;
   }
+  if (!result.ok && result.code === 'INVALID_USERNAME') {
+    jsonErr(
+      res,
+      400,
+      'username must be 2-24 chars, lowercase letters, digits, dot, dash, or underscore',
+      'INVALID_USERNAME',
+    );
+    return;
+  }
+  if (!result.ok && result.code === 'INVALID_PASSWORD') {
+    jsonErr(res, 400, 'password must be at least 6 characters', 'INVALID_PASSWORD');
+    return;
+  }
   if (!result.ok && result.code === 'USERNAME_TAKEN') {
     jsonErr(res, 409, 'Username already registered', 'USERNAME_TAKEN');
     return;

@@ -1,5 +1,9 @@
 import { hashPassword, verifyPassword } from './password.js';
 
+const USERNAME_PATTERN = /^[a-z0-9][a-z0-9_.-]{1,23}$/;
+const MIN_PASSWORD_LEN = 6;
+const MAX_PASSWORD_LEN = 256;
+
 const users = new Map();
 
 function normalizeUsername(name) {
@@ -7,13 +11,21 @@ function normalizeUsername(name) {
   return name.trim().toLowerCase();
 }
 
+function validUsername(name) {
+  return USERNAME_PATTERN.test(name);
+}
+
+function validPassword(pw) {
+  return typeof pw === 'string' && pw.length >= MIN_PASSWORD_LEN && pw.length <= MAX_PASSWORD_LEN;
+}
+
 export function createUser(username, password) {
   const key = normalizeUsername(username);
-  if (!key) {
-    return { ok: false, code: 'INVALID_CREDENTIALS' };
+  if (!validUsername(key)) {
+    return { ok: false, code: 'INVALID_USERNAME' };
   }
-  if (typeof password !== 'string' || password.length === 0) {
-    return { ok: false, code: 'INVALID_CREDENTIALS' };
+  if (!validPassword(password)) {
+    return { ok: false, code: 'INVALID_PASSWORD' };
   }
   if (users.has(key)) {
     return { ok: false, code: 'USERNAME_TAKEN' };
