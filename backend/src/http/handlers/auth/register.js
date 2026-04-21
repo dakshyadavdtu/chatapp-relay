@@ -2,8 +2,17 @@ import { registerWithBody } from '../../../auth/service.js';
 import { buildSessionCookie } from '../../../auth/cookies.js';
 import { readJsonBody } from '../../body.js';
 import { jsonErr, jsonOk } from '../../json.js';
+import { createLimiter } from '../../rateLimit.js';
+
+const registerLimit = createLimiter({ name: 'register', windowMs: 60_000, max: 20 });
 
 export async function handleAuthRegister(ctx, res) {
+  const limit = registerLimit(ctx.req);
+  if (!limit.ok) {
+    res.setHeader?.('Retry-After', String(Math.ceil(limit.retryAfterMs / 1000)));
+    jsonErr(res, 429, 'Too many attempts, try again soon', 'RATE_LIMITED');
+    return;
+  }
   const ct = ctx.req.headers['content-type'] ?? '';
   if (!ct.includes('application/json')) {
     jsonErr(res, 415, 'Unsupported media type', 'UNSUPPORTED_MEDIA_TYPE');

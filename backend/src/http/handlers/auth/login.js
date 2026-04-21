@@ -2,8 +2,17 @@ import { loginWithPassword } from '../../../auth/service.js';
 import { buildSessionCookie } from '../../../auth/cookies.js';
 import { readJsonBody } from '../../body.js';
 import { jsonErr, jsonOk } from '../../json.js';
+import { createLimiter } from '../../rateLimit.js';
+
+const loginLimit = createLimiter({ name: 'login', windowMs: 60_000, max: 30 });
 
 export async function handleAuthLogin(ctx, res) {
+  const limit = loginLimit(ctx.req);
+  if (!limit.ok) {
+    res.setHeader?.('Retry-After', String(Math.ceil(limit.retryAfterMs / 1000)));
+    jsonErr(res, 429, 'Too many attempts, try again soon', 'RATE_LIMITED');
+    return;
+  }
   const ct = ctx.req.headers['content-type'] ?? '';
   if (!ct.includes('application/json')) {
     jsonErr(res, 415, 'Unsupported media type', 'UNSUPPORTED_MEDIA_TYPE');
