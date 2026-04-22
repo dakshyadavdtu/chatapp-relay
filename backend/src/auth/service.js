@@ -1,4 +1,4 @@
-import { createSession, deleteSession, getSession } from './session.js';
+import { createSession, deleteSession, getSession, touchSession } from './session.js';
 import { getCookie } from './cookies.js';
 import { authenticate, createUser } from './users.js';
 
@@ -12,11 +12,13 @@ export async function loginWithPassword(username, password) {
 }
 
 export async function refreshWithRequest(req) {
+  const token = getCookie(req, 'sid');
   const session = await getSession(req);
   if (!session) {
     return { ok: false, code: 'UNAUTHORIZED' };
   }
-  return { ok: true, user: session.user };
+  touchSession(token);
+  return { ok: true, user: session.user, token };
 }
 
 export async function logoutWithRequest(req) {
