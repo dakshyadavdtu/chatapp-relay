@@ -31,7 +31,7 @@ export function createUser(username, password) {
     return { ok: false, code: 'USERNAME_TAKEN' };
   }
   const record = {
-    id: `user:${key}`,
+    id: key,
     username: key,
     passwordHash: hashPassword(password),
     createdAt: Date.now(),

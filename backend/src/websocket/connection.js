@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { dispatchIncomingMessage } from './messages.js';
 import { onConnectionClose, onConnectionOpen } from './presence.js';
+import { notifyUserStatus } from './presence.js';
 import { registerUserConnection, removeUserConnection } from './connections.js';
 import { getSession } from '../auth/session.js';
 import { getCookie } from '../auth/cookies.js';
@@ -40,7 +41,10 @@ export function handleConnection(ws, req, hooks = {}) {
       }
       const userId = session?.user?.id ?? 'u1';
       ctx.userId = String(userId);
-      registerUserConnection(ctx.userId, ctx);
+      const firstConnection = registerUserConnection(ctx.userId, ctx);
+      if (firstConnection) {
+        notifyUserStatus(ctx.userId, 'online');
+      }
     })
     .catch(() => {});
   onConnectionOpen(ctx);
@@ -50,7 +54,10 @@ export function handleConnection(ws, req, hooks = {}) {
     }
     closed = true;
     if (ctx.userId) {
-      removeUserConnection(ctx.userId, ctx);
+      const lastConnection = removeUserConnection(ctx.userId, ctx);
+      if (lastConnection) {
+        notifyUserStatus(ctx.userId, 'offline');
+      }
     }
     if (typeof hooks.onClose === 'function') {
       hooks.onClose(ctx);
