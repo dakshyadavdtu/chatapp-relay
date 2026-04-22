@@ -1,5 +1,9 @@
 import {
   applyIncomingMessage,
+  applyMessageStateUpdate,
+  applyPresenceEvent,
+  applyPresenceSnapshot,
+  applyTypingEvent,
   recoverAfterReconnect,
 } from './state.js';
 import { startJsonSocket } from '../../transport/ws.js';
@@ -44,6 +48,23 @@ const handlers = {
       applyIncomingMessage(incoming);
     }
   },
+  MESSAGE_STATE_UPDATE(msg) {
+    applyMessageStateUpdate(msg);
+  },
+  TYPING_START(msg) {
+    applyTypingEvent(msg);
+  },
+  TYPING_STOP(msg) {
+    applyTypingEvent(msg);
+  },
+  PRESENCE(msg) {
+    applyPresenceEvent(msg);
+  },
+  PRESENCE_SNAPSHOT(msg) {
+    applyPresenceSnapshot(msg);
+  },
+  HELLO_ACK(_msg) {},
+  PONG(_msg) {},
   pong(_msg) {},
 };
 
@@ -84,12 +105,28 @@ export function startChatRealtime() {
         fn(msg);
       }
     },
+    onStatus(st) {
+      if (st === 'open' && session) {
+        session.send({ type: 'HELLO' });
+        session.send({ type: 'PRESENCE_LIST' });
+      }
+    },
     onAuthClose() {
       stopChatRealtime();
       setAuthUser(null);
       navigate('/');
     },
   });
+}
+
+export function sendChatTyping(chatId, isStart) {
+  if (!session || !chatId) return;
+  session.send({ type: isStart ? 'TYPING_START' : 'TYPING_STOP', chatId });
+}
+
+export function sendMessageRead(messageId) {
+  if (!session || !messageId) return;
+  session.send({ type: 'MESSAGE_READ', messageId });
 }
 
 export function stopChatRealtime() {

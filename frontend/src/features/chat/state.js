@@ -38,6 +38,8 @@ export const chatState = {
   searchStatus: 'idle',
   searchError: null,
   searchResults: [],
+  typingByChat: {},
+  presenceByUser: {},
 };
 
 const chatApi = {
@@ -377,8 +379,101 @@ export function resetChatState() {
   chatState.searchStatus = 'idle';
   chatState.searchError = null;
   chatState.searchResults = [];
+  chatState.typingByChat = {};
+  chatState.presenceByUser = {};
   lastReadSyncByChat.clear();
   forcedReadByChat.clear();
+  clearTypingTimers();
+}
+
+const TYPING_TIMEOUT_MS = 4000;
+const typingTimers = new Map();
+
+function clearTypingTimers() {
+  for (const t of typingTimers.values()) {
+    clearTimeout(t);
+  }
+  typingTimers.clear();
+}
+
+function scheduleTypingClear(chatId, userId) {
+  const key = `${chatId}::${userId}`;
+  if (typingTimers.has(key)) {
+    clearTimeout(typingTimers.get(key));
+  }
+  const t = setTimeout(() => {
+    typingTimers.delete(key);
+    setTypingFor(chatId, userId, false);
+    notifyChatMessages(chatId);
+  }, TYPING_TIMEOUT_MS);
+  typingTimers.set(key, t);
+}
+
+function setTypingFor(chatId, userId, isTyping) {
+  if (!chatId || !userId) return;
+  const map = chatState.typingByChat[chatId] ?? {};
+  if (isTyping) {
+    map[userId] = Date.now();
+  } else {
+    delete map[userId];
+  }
+  chatState.typingByChat = { ...chatState.typingByChat, [chatId]: { ...map } };
+}
+
+export function applyTypingEvent(evt) {
+  const chatId = typeof evt?.chatId === 'string' ? evt.chatId : '';
+  const userId = typeof evt?.userId === 'string' ? evt.userId : '';
+  if (!chatId || !userId) return;
+  const isStart = evt?.type === 'TYPING_START';
+  setTypingFor(chatId, userId, isStart);
+  if (isStart) {
+    scheduleTypingClear(chatId, userId);
+  } else {
+    const key = `${chatId}::${userId}`;
+    if (typingTimers.has(key)) {
+      clearTimeout(typingTimers.get(key));
+      typingTimers.delete(key);
+    }
+  }
+  notifyChatMessages(chatId);
+}
+
+export function applyPresenceEvent(evt) {
+  const userId = typeof evt?.userId === 'string' ? evt.userId : '';
+  if (!userId) return;
+  const status = evt?.status === 'online' ? 'online' : 'offline';
+  chatState.presenceByUser = {
+    ...chatState.presenceByUser,
+    [userId]: { status, ts: Number.isFinite(evt?.ts) ? evt.ts : Date.now() },
+  };
+}
+
+export function applyPresenceSnapshot(evt) {
+  if (!Array.isArray(evt?.users)) return;
+  const next = { ...chatState.presenceByUser };
+  const ts = Number.isFinite(evt?.ts) ? evt.ts : Date.now();
+  for (const row of evt.users) {
+    const userId = typeof row?.userId === 'string' ? row.userId : '';
+    if (!userId) continue;
+    next[userId] = { status: row.status === 'online' ? 'online' : 'offline', ts };
+  }
+  chatState.presenceByUser = next;
+}
+
+export function applyMessageStateUpdate(evt) {
+  const chatId = typeof evt?.chatId === 'string' ? evt.chatId : '';
+  const messageId = typeof evt?.messageId === 'string' ? evt.messageId : '';
+  const state = typeof evt?.state === 'string' ? evt.state : '';
+  if (!chatId || !messageId || !state) return;
+  const prev = chatState.messagesByChat[chatId];
+  if (!prev || !Array.isArray(prev.items)) return;
+  const idx = prev.items.findIndex((row) => row?.id === messageId || row?.messageId === messageId);
+  if (idx < 0) return;
+  const updated = { ...prev.items[idx], state };
+  const nextItems = [...prev.items];
+  nextItems[idx] = updated;
+  chatState.messagesByChat[chatId] = { ...prev, items: nextItems };
+  notifyChatMessages(chatId);
 }
 
 const MAX_IMAGE_UPLOAD_BYTES = 2 * 1024 * 1024;
