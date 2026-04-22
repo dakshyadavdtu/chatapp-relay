@@ -16,8 +16,8 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FRONTEND_ROOT = join(__dirname, "..");
-// Monorepo root: sibling of `frontend/` contains `backend/`
-const BACKEND_ROOT = join(FRONTEND_ROOT, "..");
+// Project root (parent of myfrontend) contains backend/
+const BACKEND_ROOT = join(FRONTEND_ROOT, "..", "..");
 
 function loadJson(path) {
   try {

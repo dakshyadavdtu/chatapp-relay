@@ -25,30 +25,6 @@ const ALLOWLIST = new Set([
   'services/group.chat/core/rooms/room.manager.js',
   'services/group.chat/core/rooms/room.logic.js',
   'services/message.core/core/messaging/message.logic.js',
-  // Legitimate Map/Set usage outside websocket/state (persistence, caches, scripts).
-  'auth/passwordResetStore.js',
-  'chat/readCursorStore.mongo.js',
-  'config/db.file.js',
-  'config/origins.js',
-  'events/userUpdated.js',
-  'http/controllers/admin.controller.js',
-  'http/controllers/search.controller.js',
-  'observability/adminActivityBuffer.js',
-  'observability/aggregators/connections.js',
-  'scripts/room_resume_smoke.js',
-  'scripts/room_ws_smoke.js',
-  'services/history.service.js',
-  'services/redisAdapter.js',
-  'services/redisBus.js',
-  'services/redisBusHandlers.js',
-  'storage/message.mongo.js',
-  'storage/message.store.js',
-  'storage/user.mongo.js',
-  'websocket/connection/connectionManager.js',
-  'websocket/connection/lifecycle.js',
-  'websocket/connection/wsServer.js',
-  'websocket/handlers/room.js',
-  'websocket/safety/socketSafety.js',
 ]);
 
 function getAllJsFiles(dir, baseDir, list) {
@@ -97,7 +73,6 @@ function main() {
   const errors = [];
 
   for (const { full, rel } of jsFiles) {
-    if (rel.startsWith('tests/')) continue;
     if (isAllowed(rel)) continue;
     const violations = scanFile(full, rel);
     for (const v of violations) {

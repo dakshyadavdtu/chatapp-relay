@@ -58,7 +58,7 @@ async function run() {
   const usersReq = mockReq();
   usersReq.query = {};
   const usersRes = mockRes();
-  await adminController.getUsers(usersReq, usersRes);
+  adminController.getUsers(usersReq, usersRes);
   const usersOut = usersRes.getOut();
   if (usersOut.statusCode !== 200) fail(`GET /admin/users expected 200, got ${usersOut.statusCode}`);
   const data = usersOut.body?.data || usersOut.body;
@@ -87,7 +87,7 @@ async function run() {
   const diagReq = mockReq();
   diagReq.params = { userId: existingUserId };
   const diagRes = mockRes();
-  await adminController.getDiagnostics(diagReq, diagRes);
+  adminController.getDiagnostics(diagReq, diagRes);
   const diagOut = diagRes.getOut();
   if (diagOut.statusCode !== 200) fail(`GET /admin/diagnostics/:userId expected 200, got ${diagOut.statusCode}`);
   const diagData = diagOut.body?.data || diagOut.body;
@@ -110,7 +110,7 @@ async function run() {
   const randomIdReq = mockReq();
   randomIdReq.params = { userId: 'random-nonexistent-user-id-404' };
   const randomIdRes = mockRes();
-  await adminController.getDiagnostics(randomIdReq, randomIdRes);
+  adminController.getDiagnostics(randomIdReq, randomIdRes);
   const randomOut = randomIdRes.getOut();
   if (randomOut.statusCode !== 404) fail(`GET /admin/diagnostics random id expected 404, got ${randomOut.statusCode}`);
   if (randomOut.body?.code !== 'NOT_FOUND') fail('Random id must return code NOT_FOUND');
