@@ -16,6 +16,8 @@ import { handleApiChatSendToChat } from './handlers/chats/sendMessageToChat.js';
 import { handleApiChatMarkRead } from './handlers/chats/markRead.js';
 import { handleApiUploadImage } from './handlers/uploads/uploadImage.js';
 import { handleUploadImageGet } from './handlers/uploads/getImage.js';
+import { handleAdminUsersList } from './handlers/admin/listUsers.js';
+import { handleAdminMessageDelete } from './handlers/admin/deleteMessage.js';
 
 any('/', handleHealth);
 any('/health', handleHealth);
@@ -36,5 +38,7 @@ route(['POST'], '/api/chats/:chatId/messages', handleApiChatSendToChat);
 route(['POST'], '/api/chats/:chatId/read', handleApiChatMarkRead);
 route(['POST'], '/api/chat/send', handleApiChatSend);
 route(['GET', 'HEAD'], '/uploads/:uploadId', handleUploadImageGet);
+route(['GET', 'HEAD'], '/api/admin/users', handleAdminUsersList);
+route(['POST', 'DELETE'], '/api/admin/messages/:messageId', handleAdminMessageDelete);
 
 export { match } from './router.js';

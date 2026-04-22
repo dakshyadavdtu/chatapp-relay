@@ -97,6 +97,7 @@ export function createMemoryStorage() {
           createdAt: record.createdAt ?? now(),
           clientId: record.clientId ?? null,
           recipientId: record.recipientId ?? null,
+          deletedAt: null,
         };
         messagesById.set(message.id, message);
         const list = messagesByChatId.get(chatId) ?? [];
@@ -140,6 +141,30 @@ export function createMemoryStorage() {
       async listAllByChatId(chatId) {
         const list = messagesByChatId.get(chatId) ?? [];
         return [...list];
+      },
+      async softDelete(messageId) {
+        const message = messagesById.get(messageId);
+        if (!message) return null;
+        if (message.deletedAt) return message;
+        message.deletedAt = now();
+        message.body = '';
+        message.imageUrl = null;
+        message.imageName = null;
+        message.imageMimeType = null;
+        message.imageSize = null;
+        const chat = chats.get(message.chatId);
+        if (chat && chat.lastMessage?.id === message.id) {
+          chat.lastMessage = {
+            ...chat.lastMessage,
+            body: '',
+            imageUrl: null,
+            imageName: null,
+            imageMimeType: null,
+            imageSize: null,
+            deletedAt: message.deletedAt,
+          };
+        }
+        return message;
       },
     },
     reads: {

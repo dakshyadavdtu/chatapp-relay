@@ -46,5 +46,6 @@ function toMessageWire(m) {
     createdAt,
     clientId: m.clientId ?? null,
     state: m.state ?? 'SENT',
+    deletedAt: Number.isFinite(m.deletedAt) ? m.deletedAt : null,
   };
 }

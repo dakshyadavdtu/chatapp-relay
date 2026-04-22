@@ -33,11 +33,19 @@ function readSameSite() {
   return 'Lax';
 }
 
+function readAdminSeed() {
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+  if (!username || !password) return null;
+  return { username, password };
+}
+
 export function loadConfig() {
   return {
     port: readPort(),
     allowedOrigins: readAllowedOrigins(),
     cookieSecure: readBoolean('COOKIE_SECURE', false),
     cookieSameSite: readSameSite(),
+    adminSeed: readAdminSeed(),
   };
 }
