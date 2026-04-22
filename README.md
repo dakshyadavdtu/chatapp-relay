@@ -8,6 +8,8 @@ There are early HTTP routes, a Vite client that calls `/api` (proxied in dev) wi
 
 The chat page shows per-chat loading and error states, keeps messages sorted oldest-first, disables the composer while sending, refreshes the active thread after you send, and updates chat-list unread badges and previews as messages arrive. Reconnect retries are capped, auth-related socket closes stop retry, and reconnect recovery re-syncs the active chat. Chat search can find matching chats and recent messages, then open the selected conversation from the result list. Image messages are supported with a simple upload flow from the chat composer.
 
+The WebSocket layer also carries typing indicators (`TYPING_START`/`TYPING_STOP`), presence events (`PRESENCE` on connect/disconnect, `PRESENCE_LIST` for a snapshot), and message state updates (`MESSAGE_READ` from the recipient produces a `MESSAGE_STATE_UPDATE` for the sender). The client opens with `HELLO` and handles `PONG` replies to `PING`.
+
 ## Project structure
 
 ```
@@ -32,6 +34,8 @@ npm test
 ```
 Chat API basics: `GET /api/chats` lists chats with unread counts, `GET /api/chats/search?q=...` returns chat/message discovery rows, `POST /api/uploads/image` uploads an image for chat use, `GET /uploads/:uploadId` serves uploaded image bytes, `GET /api/chats/:chatId/open` returns chat plus recent messages, `POST /api/chats/:chatId/messages` sends a message for that chat (text or image) — this is the endpoint the shipped client uses, and the older `POST /api/chat/send` still works as a compatibility alias, `POST /api/chats/:chatId/read` stores the current read position.
 
+Admin surface (requires an account with the `admin` role): `GET /api/admin/users` lists users and `POST /api/admin/messages/:messageId` soft-deletes a message (its content is cleared but the row remains with `deletedAt` set). To seed a starter admin on boot, set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `backend/.env`. All other users register as regular users.
+
 **Frontend** — from `frontend/`:
 
 ```bash
@@ -40,6 +44,6 @@ npm run dev
 # optional: npm test (frontend feature tests)
 ```
 
-Auth is minimal and in-memory: register a username/password via the home page form or `POST /api/register`, then log in with the same credentials. Passwords are hashed on the server before storage, `/api/me` returns the current user while the `sid` cookie is valid, and the home page logout button clears the session, stops chat, and sends you back home if you were on `#/chat`. Login and register are rate limited per client address. Cookie flags (`Secure`, `SameSite`) and the CORS allowlist are driven by `backend/.env` (see `backend/.env.example`).
+Auth is minimal and in-memory: register a username/password via the home page form or `POST /api/register`, then log in with the same credentials. Passwords are hashed on the server before storage, `/api/me` returns the current user while the `sid` cookie is valid, and the home page logout button clears the session, stops chat, and sends you back home if you were on `#/chat`. Sessions expire after 24 hours of inactivity (configurable via `SESSION_TTL_MS`); `POST /api/auth/refresh` extends an active session and re-issues the cookie. Login and register are rate limited per client address. Cookie flags (`Secure`, `SameSite`) and the CORS allowlist are driven by `backend/.env` (see `backend/.env.example`).
 
 If you need custom ports or URLs, copy `.env.example` to `.env` in `backend/` or `frontend/` and edit there. In dev, Vite proxies `/api`, `/uploads`, and `/ws` to the backend so HTTP calls, uploaded image URLs, and WebSockets all share the same origin as the page. For non-local or split-host setups, set `VITE_API_BASE_URL` to the backend origin (used for both `/api/*` and `/uploads/*` requests) and `VITE_WS_URL` to the WebSocket origin (the client appends `/ws` when missing).
