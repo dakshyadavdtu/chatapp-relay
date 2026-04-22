@@ -103,6 +103,31 @@
       "handled": true,
       "handlerPath": "src/features/admin/api/admin.api.js + AdminUsersPage",
       "missingHandlerReason": null
+    },
+    "POST /chats/:chatId/read": {
+      "handled": true,
+      "handlerPath": "src/features/chat/api/chat.api.js (markChatRead / POST read cursor)",
+      "missingHandlerReason": null
+    },
+    "GET /admin/dashboard": {
+      "handled": true,
+      "handlerPath": "src/features/admin/api/admin.api.js + admin dashboard views",
+      "missingHandlerReason": null
+    },
+    "GET /admin/users": {
+      "handled": true,
+      "handlerPath": "src/features/admin/api/admin.api.js + AdminUsersPage",
+      "missingHandlerReason": null
+    },
+    "GET /admin/diagnostics/:userId": {
+      "handled": true,
+      "handlerPath": "src/features/admin/api/admin.api.js + diagnostics UI",
+      "missingHandlerReason": null
+    },
+    "GET /admin/reports": {
+      "handled": true,
+      "handlerPath": "src/features/admin/api/admin.api.js + reports UI",
+      "missingHandlerReason": null
     }
   },
   "websocket": {

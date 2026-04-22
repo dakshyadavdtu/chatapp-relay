@@ -407,6 +407,7 @@ async function run() {
   console.log('PASS: Old doc without category reads priority normal');
 
   console.log('\n✅ Admin endpoints contract tests passed');
+  process.exit(0);
 }
 
 run().catch((err) => {

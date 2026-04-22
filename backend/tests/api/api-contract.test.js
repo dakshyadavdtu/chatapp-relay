@@ -202,6 +202,7 @@ async function run() {
   console.log('PASS: Admin reports response shape');
 
   console.log('\n✅ All API contract tests passed');
+  process.exit(0);
 }
 
 run().catch((err) => {

@@ -166,6 +166,7 @@ async function run() {
     const reportMiddle = await reportsStore.createReport({
       reporterUserId: 'rep1',
       reason: 'Spam',
+      category: 'Spam',
       messageId: sixthMessageId,
       conversationId: CHAT_ID,
       senderId: SENDER,
@@ -208,6 +209,7 @@ async function run() {
     const reportStart = await reportsStore.createReport({
       reporterUserId: 'rep1',
       reason: 'Spam',
+      category: 'Spam',
       messageId: secondMessageId,
       conversationId: CHAT_ID,
       senderId: SENDER,
@@ -233,6 +235,7 @@ async function run() {
     const reportEnd = await reportsStore.createReport({
       reporterUserId: 'rep1',
       reason: 'Spam',
+      category: 'Spam',
       messageId: ninthMessageId,
       conversationId: CHAT_ID,
       senderId: SENDER,
@@ -255,6 +258,7 @@ async function run() {
     const reportMissing = await reportsStore.createReport({
       reporterUserId: 'rep1',
       reason: 'Spam',
+      category: 'Spam',
       messageId: 'msg_nonexistent_xyz',
       conversationId: CHAT_ID,
       senderId: SENDER,
@@ -285,6 +289,7 @@ async function run() {
     const reportDedup = await reportsStore.createReport({
       reporterUserId: 'rep1',
       reason: 'Spam',
+      category: 'Spam',
       messageId: roomAnchorId,
       conversationId: roomChatId,
       senderId: 'u2',
@@ -315,6 +320,7 @@ async function run() {
     const clampReport = await reportsStore.createReport({
       reporterUserId: 'rep1',
       reason: 'Spam',
+      category: 'Spam',
       messageId: clampSeeded[1].messageId,
       conversationId: clampChatId,
       senderId: SENDER,
@@ -363,6 +369,7 @@ async function run() {
   }
 
   console.log('\n✅ Admin report context-window tests passed');
+  process.exit(0);
 }
 
 run().catch((err) => {
